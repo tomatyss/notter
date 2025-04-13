@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { NoteList } from "./components/NoteList";
 import { NoteViewer } from "./components/NoteViewer";
+import { SearchPanel } from "./components/SearchPanel";
 import { AppConfig, Note, NoteSummary } from "./types";
 import "./App.css";
 
@@ -104,6 +105,11 @@ function App() {
             config={config} 
             onConfigUpdate={handleConfigUpdate} 
             loading={configLoading} 
+          />
+          
+          <SearchPanel
+            onSelectNote={handleSelectNote}
+            loading={configLoading || notesLoading}
           />
           
           <NoteList 

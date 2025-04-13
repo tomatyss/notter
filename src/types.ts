@@ -97,3 +97,23 @@ export interface NoteSummary {
    */
   file_type: NoteType;
 }
+
+/**
+ * Search result with highlighting information
+ */
+export interface SearchResult {
+  /**
+   * The note summary
+   */
+  note: NoteSummary;
+  
+  /**
+   * Highlighted snippets from the content
+   */
+  snippets: string[];
+  
+  /**
+   * Search relevance score
+   */
+  score: number;
+}

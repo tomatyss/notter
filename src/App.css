@@ -118,6 +118,120 @@ body {
   cursor: not-allowed;
 }
 
+/* Search Panel */
+.search-panel {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.search-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.search-spinner {
+  position: absolute;
+  right: 10px;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-top: 2px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.search-results {
+  margin-top: 1rem;
+}
+
+.search-results h3 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.results-list {
+  list-style: none;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.search-result-item:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.result-title {
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.result-snippets {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.result-snippet {
+  margin-bottom: 0.25rem;
+}
+
+.result-snippet em {
+  background-color: rgba(52, 152, 219, 0.2);
+  font-style: normal;
+  padding: 0 2px;
+}
+
+.result-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.result-tag {
+  font-size: 0.7rem;
+  background-color: #eee;
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+}
+
+.search-error {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: rgba(231, 76, 60, 0.1);
+  color: var(--error-color);
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.no-results {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  text-align: center;
+  color: #666;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
 /* Note List */
 .note-list {
   flex: 1;

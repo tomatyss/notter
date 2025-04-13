@@ -1,0 +1,153 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { SearchResult } from '../types';
+import { debounce } from 'lodash';
+
+/**
+ * Props for the SearchPanel component
+ */
+interface SearchPanelProps {
+  /**
+   * Callback when a search result is selected
+   */
+  onSelectNote: (id: string) => void;
+  
+  /**
+   * Whether the component is in a loading state
+   */
+  loading: boolean;
+}
+
+/**
+ * Component for searching notes
+ * 
+ * @param props Component props
+ * @returns Search panel UI component
+ */
+export const SearchPanel: React.FC<SearchPanelProps> = ({ 
+  onSelectNote,
+  loading 
+}) => {
+  // State
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    debounce(async (searchQuery: string) => {
+      if (!searchQuery.trim()) {
+        setResults([]);
+        return;
+      }
+      
+      try {
+        setSearching(true);
+        const searchResults = await invoke<SearchResult[]>('search_notes', { 
+          query: searchQuery,
+          limit: 50
+        });
+        setResults(searchResults);
+        setError(null);
+      } catch (err) {
+        console.error('Search failed:', err);
+        setError(`Search failed: ${err}`);
+        setResults([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 300),
+    []
+  );
+  
+  // Trigger search when query changes
+  useEffect(() => {
+    debouncedSearch(query);
+    
+    // Cleanup
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [query, debouncedSearch]);
+  
+  // Handle input change
+  const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+  };
+  
+  // Handle result selection
+  const handleResultClick = (id: string) => {
+    onSelectNote(id);
+  };
+  
+  // Render HTML from highlighted snippets
+  const renderSnippet = (html: string) => {
+    return { __html: html };
+  };
+  
+  return (
+    <div className="search-panel">
+      <div className="search-input-container">
+        <input
+          type="text"
+          className="search-input"
+          placeholder="Search notes..."
+          value={query}
+          onChange={handleQueryChange}
+          disabled={loading}
+        />
+        {searching && <div className="search-spinner"></div>}
+      </div>
+      
+      {error && (
+        <div className="search-error">
+          {error}
+        </div>
+      )}
+      
+      {results.length > 0 ? (
+        <div className="search-results">
+          <h3>Search Results</h3>
+          <ul className="results-list">
+            {results.map(result => (
+              <li 
+                key={result.note.id} 
+                className="search-result-item"
+                onClick={() => handleResultClick(result.note.id)}
+              >
+                <h4 className="result-title">{result.note.title}</h4>
+                
+                {result.snippets.length > 0 && (
+                  <div className="result-snippets">
+                    {result.snippets.map((snippet, index) => (
+                      <div 
+                        key={index}
+                        className="result-snippet"
+                        dangerouslySetInnerHTML={renderSnippet(snippet)}
+                      />
+                    ))}
+                  </div>
+                )}
+                
+                {result.note.tags.length > 0 && (
+                  <div className="result-tags">
+                    {result.note.tags.map(tag => (
+                      <span key={tag} className="result-tag">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : query.trim() !== '' && !searching ? (
+        <div className="no-results">
+          No results found
+        </div>
+      ) : null}
+    </div>
+  );
+};

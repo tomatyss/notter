@@ -1,18 +1,21 @@
 mod config;
 mod notes;
+mod search;
 
 use std::sync::Mutex;
 use std::path::PathBuf;
-use tauri::{AppHandle, Manager, State, Runtime};
+use tauri::{Manager, State};
 use anyhow::Result;
 
 use config::{AppConfig, ConfigManager};
 use notes::{Note, NoteManager, NoteSummary};
+use search::{SearchManager, SearchResult};
 
 /// Application state shared between commands
 struct AppState {
     config_manager: Mutex<ConfigManager>,
     note_manager: Mutex<Option<NoteManager>>,
+    search_manager: Mutex<SearchManager>,
 }
 
 /// Gets the current configuration
@@ -48,7 +51,23 @@ async fn select_folder(path: String, state: State<'_, AppState>) -> Result<AppCo
     
     // Initialize note manager
     let note_manager = NoteManager::new(folder);
-    *state.note_manager.lock().map_err(|e| e.to_string())? = Some(note_manager);
+    *state.note_manager.lock().map_err(|e| e.to_string())? = Some(note_manager.clone());
+    
+    // Rebuild search index with all notes
+    let search_manager = state.search_manager.lock().map_err(|e| e.to_string())?;
+    
+    // Get all notes
+    let note_summaries = note_manager.list_notes().map_err(|e| e.to_string())?;
+    let mut notes = Vec::new();
+    
+    // Load full notes
+    for summary in note_summaries {
+        let note = note_manager.get_note(&summary.id).map_err(|e| e.to_string())?;
+        notes.push(note);
+    }
+    
+    // Rebuild index
+    search_manager.rebuild_index(&notes).map_err(|e| e.to_string())?;
     
     Ok(config_manager.get_config())
 }
@@ -86,6 +105,53 @@ async fn get_note(id: String, state: State<'_, AppState>) -> Result<Note, String
     note_manager.get_note(&id).map_err(|e| e.to_string())
 }
 
+/// Searches for notes matching the query
+/// 
+/// # Parameters
+/// * `query` - The search query
+/// * `limit` - Maximum number of results to return (optional)
+/// 
+/// # Returns
+/// List of search results
+#[tauri::command]
+async fn search_notes(
+    query: String,
+    limit: Option<usize>,
+    state: State<'_, AppState>
+) -> Result<Vec<SearchResult>, String> {
+    let search_manager = state.search_manager.lock().map_err(|e| e.to_string())?;
+    let limit = limit.unwrap_or(100);
+    
+    search_manager.search(&query, limit).map_err(|e| e.to_string())
+}
+
+/// Rebuilds the search index with all notes
+/// 
+/// # Returns
+/// Result indicating success or failure
+#[tauri::command]
+async fn rebuild_search_index(state: State<'_, AppState>) -> Result<(), String> {
+    let search_manager = state.search_manager.lock().map_err(|e| e.to_string())?;
+    let note_manager_lock = state.note_manager.lock().map_err(|e| e.to_string())?;
+    
+    let Some(note_manager) = note_manager_lock.as_ref() else {
+        return Err("Note manager not initialized".into());
+    };
+    
+    // Get all notes
+    let note_summaries = note_manager.list_notes().map_err(|e| e.to_string())?;
+    let mut notes = Vec::new();
+    
+    // Load full notes
+    for summary in note_summaries {
+        let note = note_manager.get_note(&summary.id).map_err(|e| e.to_string())?;
+        notes.push(note);
+    }
+    
+    // Rebuild index
+    search_manager.rebuild_index(&notes).map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -99,6 +165,10 @@ pub fn run() {
             let config_manager = ConfigManager::new(&config_dir)
                 .expect("Failed to initialize config manager");
             
+            // Initialize search manager
+            let search_manager = SearchManager::new(&app_dir)
+                .expect("Failed to initialize search manager");
+            
             // Initialize note manager if notes directory is configured
             let note_manager = if let Some(notes_dir) = config_manager.get_config().notes_dir {
                 Some(NoteManager::new(notes_dir))
@@ -110,6 +180,7 @@ pub fn run() {
             app.manage(AppState {
                 config_manager: Mutex::new(config_manager),
                 note_manager: Mutex::new(note_manager),
+                search_manager: Mutex::new(search_manager),
             });
             
             Ok(())
@@ -119,6 +190,8 @@ pub fn run() {
             select_folder,
             list_notes,
             get_note,
+            search_notes,
+            rebuild_search_index,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

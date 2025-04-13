@@ -52,6 +52,7 @@ pub struct NoteSummary {
 }
 
 /// Manages notes in the file system
+#[derive(Clone)]
 pub struct NoteManager {
     /// Base directory for notes
     notes_dir: PathBuf,
