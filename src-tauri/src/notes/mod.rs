@@ -6,6 +6,15 @@ use anyhow::{Context, Result};
 use walkdir::WalkDir;
 use base64::Engine;
 
+/// Represents the type of a note file
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum NoteType {
+    /// Markdown formatted note
+    Markdown,
+    /// Plain text note
+    PlainText,
+}
+
 /// Represents a note in the system
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Note {
@@ -13,7 +22,7 @@ pub struct Note {
     pub id: String,
     /// Title of the note
     pub title: String,
-    /// Content of the note in markdown format
+    /// Content of the note
     pub content: String,
     /// When the note was created
     pub created: DateTime<Utc>,
@@ -21,6 +30,8 @@ pub struct Note {
     pub modified: DateTime<Utc>,
     /// Tags associated with the note
     pub tags: Vec<String>,
+    /// Type of the note (markdown or plain text)
+    pub file_type: NoteType,
 }
 
 /// Represents a note summary for listing
@@ -36,6 +47,8 @@ pub struct NoteSummary {
     pub modified: DateTime<Utc>,
     /// Tags associated with the note
     pub tags: Vec<String>,
+    /// Type of the note (markdown or plain text)
+    pub file_type: NoteType,
 }
 
 /// Manages notes in the file system
@@ -70,8 +83,8 @@ impl NoteManager {
         {
             let path = entry.path();
             
-            // Only process markdown files
-            if path.is_file() && path.extension().map_or(false, |ext| ext == "md") {
+            // Process markdown and txt files
+            if path.is_file() && path.extension().map_or(false, |ext| ext == "md" || ext == "txt") {
                 if let Ok(note) = self.get_note_summary(path) {
                     notes.push(note);
                 }
@@ -96,6 +109,49 @@ impl NoteManager {
         self.read_note(&path)
     }
     
+    /// Determines the note type based on file extension
+    /// 
+    /// # Parameters
+    /// * `path` - Path to the note file
+    /// 
+    /// # Returns
+    /// The note type (Markdown or PlainText)
+    fn get_note_type(&self, path: &Path) -> NoteType {
+        if path.extension().map_or(false, |ext| ext == "md") {
+            NoteType::Markdown
+        } else {
+            NoteType::PlainText
+        }
+    }
+    
+    /// Extracts tags from note content
+    /// 
+    /// # Parameters
+    /// * `content` - Note content to extract tags from
+    /// 
+    /// # Returns
+    /// Vector of extracted tags
+    fn extract_tags(&self, content: &str) -> Vec<String> {
+        let mut tags = Vec::new();
+        
+        for line in content.lines() {
+            // Split line into words and find those starting with #
+            for word in line.split_whitespace() {
+                if word.starts_with("#") && word.len() > 1 {
+                    // Remove the # and any trailing punctuation
+                    let tag = word.trim_start_matches('#')
+                              .trim_end_matches(|c: char| !c.is_alphanumeric())
+                              .to_string();
+                    if !tag.is_empty() && !tags.contains(&tag) {
+                        tags.push(tag);
+                    }
+                }
+            }
+        }
+        
+        tags
+    }
+    
     /// Reads a note from a file
     /// 
     /// # Parameters
@@ -107,22 +163,22 @@ impl NoteManager {
         let content = fs::read_to_string(path)
             .context("Failed to read note file")?;
         
-        // Extract title from first line
-        let title = content.lines()
-            .next()
-            .map(|line| line.trim_start_matches('#').trim().to_string())
-            .unwrap_or_else(|| "Untitled Note".to_string());
+        let file_type = self.get_note_type(path);
         
-        // Extract tags (lines starting with #tag)
-        let tags = content.lines()
-            .filter_map(|line| {
-                if line.starts_with("#") && !line.starts_with("# ") {
-                    Some(line.trim_start_matches('#').trim().to_string())
-                } else {
-                    None
-                }
-            })
-            .collect();
+        // Extract title based on file type
+        let title = match file_type {
+            NoteType::Markdown => content.lines()
+                .next()
+                .map(|line| line.trim_start_matches('#').trim().to_string())
+                .unwrap_or_else(|| "Untitled Note".to_string()),
+            NoteType::PlainText => path.file_stem()
+                .and_then(|stem| stem.to_str())
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| "Untitled Note".to_string()),
+        };
+        
+        // Extract tags from content
+        let tags = self.extract_tags(&content);
         
         // Get file metadata
         let metadata = path.metadata()
@@ -146,6 +202,7 @@ impl NoteManager {
             created,
             modified,
             tags,
+            file_type,
         })
     }
     
@@ -161,22 +218,22 @@ impl NoteManager {
         let content = fs::read_to_string(path)
             .context("Failed to read note file")?;
         
-        // Extract title from first line
-        let title = content.lines()
-            .next()
-            .map(|line| line.trim_start_matches('#').trim().to_string())
-            .unwrap_or_else(|| "Untitled Note".to_string());
+        let file_type = self.get_note_type(path);
         
-        // Extract tags (lines starting with #tag)
-        let tags = content.lines()
-            .filter_map(|line| {
-                if line.starts_with("#") && !line.starts_with("# ") {
-                    Some(line.trim_start_matches('#').trim().to_string())
-                } else {
-                    None
-                }
-            })
-            .collect();
+        // Extract title based on file type
+        let title = match file_type {
+            NoteType::Markdown => content.lines()
+                .next()
+                .map(|line| line.trim_start_matches('#').trim().to_string())
+                .unwrap_or_else(|| "Untitled Note".to_string()),
+            NoteType::PlainText => path.file_stem()
+                .and_then(|stem| stem.to_str())
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| "Untitled Note".to_string()),
+        };
+        
+        // Extract tags from content
+        let tags = self.extract_tags(&content);
         
         // Get file metadata
         let metadata = path.metadata()
@@ -199,6 +256,7 @@ impl NoteManager {
             created,
             modified,
             tags,
+            file_type,
         })
     }
     

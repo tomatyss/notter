@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
-import { Note } from '../types';
+import { Note, NoteType } from '../types';
 
 /**
  * Props for the NoteViewer component
@@ -69,7 +69,11 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({ note, loading }) => {
       </div>
       
       <div className="note-content">
-        <ReactMarkdown>{note.content}</ReactMarkdown>
+        {note.file_type === NoteType.Markdown ? (
+          <ReactMarkdown>{note.content}</ReactMarkdown>
+        ) : (
+          <pre className="plain-text-content">{note.content}</pre>
+        )}
       </div>
     </div>
   );

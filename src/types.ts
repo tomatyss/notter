@@ -9,6 +9,21 @@ export interface AppConfig {
 }
 
 /**
+ * Represents the type of a note file
+ */
+export enum NoteType {
+  /**
+   * Markdown formatted note
+   */
+  Markdown = "Markdown",
+  
+  /**
+   * Plain text note
+   */
+  PlainText = "PlainText"
+}
+
+/**
  * Represents a note in the system
  */
 export interface Note {
@@ -23,7 +38,7 @@ export interface Note {
   title: string;
   
   /**
-   * Content of the note in markdown format
+   * Content of the note
    */
   content: string;
   
@@ -41,6 +56,11 @@ export interface Note {
    * Tags associated with the note
    */
   tags: string[];
+  
+  /**
+   * Type of the note (markdown or plain text)
+   */
+  file_type: NoteType;
 }
 
 /**
@@ -71,4 +91,9 @@ export interface NoteSummary {
    * Tags associated with the note
    */
   tags: string[];
+  
+  /**
+   * Type of the note (markdown or plain text)
+   */
+  file_type: NoteType;
 }

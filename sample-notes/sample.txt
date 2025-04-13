@@ -1,0 +1,9 @@
+This is a sample plain text note.
+
+It contains multiple paragraphs and demonstrates how plain text files are displayed in Notter.
+
+#plaintext #sample #testing
+
+You can see that tags are extracted from anywhere in the content, not just at the beginning of lines.
+
+This note should appear in the note list alongside markdown notes, but it will be rendered differently in the note viewer.

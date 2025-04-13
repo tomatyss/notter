@@ -266,6 +266,16 @@ body {
   margin-bottom: 1rem;
 }
 
+.plain-text-content {
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background-color: #f8f8f8;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
 .note-content code {
   background-color: #f8f8f8;
   padding: 0.2rem 0.4rem;
@@ -330,7 +340,8 @@ body {
   }
   
   .note-content pre,
-  .note-content code {
+  .note-content code,
+  .plain-text-content {
     background-color: #2a2a2a;
   }
 }
