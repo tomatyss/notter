@@ -6,6 +6,23 @@ use anyhow::{Context, Result};
 use walkdir::WalkDir;
 use base64::Engine;
 
+/// Options for sorting notes
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SortOption {
+    /// Sort by title alphabetically (A-Z)
+    TitleAsc,
+    /// Sort by title reverse alphabetically (Z-A)
+    TitleDesc,
+    /// Sort by creation date (newest first)
+    CreatedNewest,
+    /// Sort by creation date (oldest first)
+    CreatedOldest,
+    /// Sort by modification date (newest first)
+    ModifiedNewest,
+    /// Sort by modification date (oldest first)
+    ModifiedOldest,
+}
+
 /// Represents the type of a note file
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum NoteType {
@@ -72,9 +89,12 @@ impl NoteManager {
     
     /// Lists all notes in the directory
     /// 
+    /// # Parameters
+    /// * `sort` - Optional sort option to determine the order of notes
+    /// 
     /// # Returns
     /// A list of note summaries
-    pub fn list_notes(&self) -> Result<Vec<NoteSummary>> {
+    pub fn list_notes(&self, sort: Option<SortOption>) -> Result<Vec<NoteSummary>> {
         let mut notes = Vec::new();
         
         for entry in WalkDir::new(&self.notes_dir)
@@ -92,8 +112,15 @@ impl NoteManager {
             }
         }
         
-        // Sort by modified date (newest first)
-        notes.sort_by(|a, b| b.modified.cmp(&a.modified));
+        // Apply sorting based on the provided option
+        match sort.unwrap_or(SortOption::ModifiedNewest) {
+            SortOption::TitleAsc => notes.sort_by(|a, b| a.title.cmp(&b.title)),
+            SortOption::TitleDesc => notes.sort_by(|a, b| b.title.cmp(&a.title)),
+            SortOption::CreatedNewest => notes.sort_by(|a, b| b.created.cmp(&a.created)),
+            SortOption::CreatedOldest => notes.sort_by(|a, b| a.created.cmp(&b.created)),
+            SortOption::ModifiedNewest => notes.sort_by(|a, b| b.modified.cmp(&a.modified)),
+            SortOption::ModifiedOldest => notes.sort_by(|a, b| a.modified.cmp(&b.modified)),
+        }
         
         Ok(notes)
     }

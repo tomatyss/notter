@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { NoteList } from "./components/NoteList";
 import { NoteViewer } from "./components/NoteViewer";
 import { SearchPanel } from "./components/SearchPanel";
-import { AppConfig, Note, NoteSummary } from "./types";
+import { AppConfig, Note, NoteSummary, SortOption } from "./types";
 import "./App.css";
 
 /**
@@ -18,6 +18,7 @@ function App() {
   const [notes, setNotes] = useState<NoteSummary[]>([]);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [selectedNoteId, setSelectedNoteId] = useState<string | undefined>(undefined);
+  const [sortOption, setSortOption] = useState<SortOption>(SortOption.ModifiedNewest);
   
   // Loading states
   const [configLoading, setConfigLoading] = useState(true);
@@ -26,6 +27,21 @@ function App() {
   
   // Error state
   const [error, setError] = useState<string | null>(null);
+
+  // Load notes from configured directory
+  const loadNotes = useCallback(async () => {
+    try {
+      setNotesLoading(true);
+      const notes = await invoke<NoteSummary[]>('list_notes', { sort: sortOption });
+      setNotes(notes);
+      setNotesLoading(false);
+      setConfigLoading(false); // Ensure configLoading is set to false after notes are loaded
+    } catch (err) {
+      setError(`Failed to load notes: ${err}`);
+      setNotesLoading(false);
+      setConfigLoading(false); // Ensure configLoading is set to false even if there's an error
+    }
+  }, [sortOption]);
 
   // Load initial configuration
   useEffect(() => {
@@ -48,32 +64,29 @@ function App() {
     };
     
     loadConfig();
-  }, []);
+  }, [loadNotes]);
 
-  // Load notes from configured directory
-  const loadNotes = async () => {
-    try {
-      setNotesLoading(true);
-      const notes = await invoke<NoteSummary[]>('list_notes');
-      setNotes(notes);
-      setNotesLoading(false);
-      setConfigLoading(false); // Ensure configLoading is set to false after notes are loaded
-    } catch (err) {
-      setError(`Failed to load notes: ${err}`);
-      setNotesLoading(false);
-      setConfigLoading(false); // Ensure configLoading is set to false even if there's an error
+  // Reload notes when sort option changes
+  useEffect(() => {
+    if (config?.notes_dir) {
+      loadNotes();
     }
+  }, [config?.notes_dir, loadNotes]);
+
+  // Handle sort option change
+  const handleSortChange = (sort: SortOption) => {
+    setSortOption(sort);
+    // loadNotes will be called by the useEffect when sortOption changes
   };
 
   // Handle configuration update
   const handleConfigUpdate = (updatedConfig: AppConfig) => {
     setConfig(updatedConfig);
     
-    if (updatedConfig.notes_dir) {
-      loadNotes();
-    } else {
+    if (!updatedConfig.notes_dir) {
       setConfigLoading(false); // Ensure configLoading is set to false if no notes directory is configured
     }
+    // loadNotes will be called by the useEffect when config changes
   };
 
   // Load a specific note
@@ -117,6 +130,8 @@ function App() {
             onSelectNote={handleSelectNote}
             selectedNoteId={selectedNoteId}
             loading={notesLoading}
+            currentSort={sortOption}
+            onSortChange={handleSortChange}
           />
         </div>
         

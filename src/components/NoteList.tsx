@@ -1,6 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
-import { NoteSummary } from '../types';
+import { NoteSummary, SortOption } from '../types';
+import { SortSelector } from './SortSelector';
 
 /**
  * Props for the NoteList component
@@ -25,6 +26,16 @@ interface NoteListProps {
    * Whether the component is in a loading state
    */
   loading: boolean;
+  
+  /**
+   * The currently selected sort option
+   */
+  currentSort: SortOption;
+  
+  /**
+   * Callback when the sort option changes
+   */
+  onSortChange: (sort: SortOption) => void;
 }
 
 /**
@@ -37,12 +48,22 @@ export const NoteList: React.FC<NoteListProps> = ({
   notes, 
   onSelectNote, 
   selectedNoteId,
-  loading 
+  loading,
+  currentSort,
+  onSortChange
 }) => {
   if (loading) {
     return (
       <div className="note-list loading">
-        <h2>Notes</h2>
+        <div className="note-list-header">
+          <h2>Notes</h2>
+        </div>
+        <div className="sort-container">
+          <SortSelector 
+            currentSort={currentSort} 
+            onSortChange={onSortChange} 
+          />
+        </div>
         <div className="loading-indicator">Loading notes...</div>
       </div>
     );
@@ -51,7 +72,15 @@ export const NoteList: React.FC<NoteListProps> = ({
   if (notes.length === 0) {
     return (
       <div className="note-list empty">
-        <h2>Notes</h2>
+        <div className="note-list-header">
+          <h2>Notes</h2>
+        </div>
+        <div className="sort-container">
+          <SortSelector 
+            currentSort={currentSort} 
+            onSortChange={onSortChange} 
+          />
+        </div>
         <div className="empty-state">No notes found</div>
       </div>
     );
@@ -59,7 +88,15 @@ export const NoteList: React.FC<NoteListProps> = ({
 
   return (
     <div className="note-list">
-      <h2>Notes</h2>
+      <div className="note-list-header">
+        <h2>Notes</h2>
+      </div>
+      <div className="sort-container">
+        <SortSelector 
+          currentSort={currentSort} 
+          onSortChange={onSortChange} 
+        />
+      </div>
       <ul className="notes-container">
         {notes.map(note => (
           <li 

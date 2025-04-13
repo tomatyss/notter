@@ -57,7 +57,7 @@ async fn select_folder(path: String, state: State<'_, AppState>) -> Result<AppCo
     let search_manager = state.search_manager.lock().map_err(|e| e.to_string())?;
     
     // Get all notes
-    let note_summaries = note_manager.list_notes().map_err(|e| e.to_string())?;
+    let note_summaries = note_manager.list_notes(None).map_err(|e| e.to_string())?;
     let mut notes = Vec::new();
     
     // Load full notes
@@ -74,17 +74,23 @@ async fn select_folder(path: String, state: State<'_, AppState>) -> Result<AppCo
 
 /// Lists all notes in the configured directory
 /// 
+/// # Parameters
+/// * `sort` - Optional sort option to determine the order of notes
+/// 
 /// # Returns
 /// A list of note summaries
 #[tauri::command]
-async fn list_notes(state: State<'_, AppState>) -> Result<Vec<NoteSummary>, String> {
+async fn list_notes(
+    sort: Option<notes::SortOption>,
+    state: State<'_, AppState>
+) -> Result<Vec<NoteSummary>, String> {
     let note_manager_lock = state.note_manager.lock().map_err(|e| e.to_string())?;
     
     let Some(note_manager) = note_manager_lock.as_ref() else {
         return Err("Note manager not initialized".into());
     };
     
-    note_manager.list_notes().map_err(|e| e.to_string())
+    note_manager.list_notes(sort).map_err(|e| e.to_string())
 }
 
 /// Gets a note by ID
@@ -139,7 +145,7 @@ async fn rebuild_search_index(state: State<'_, AppState>) -> Result<(), String> 
     };
     
     // Get all notes
-    let note_summaries = note_manager.list_notes().map_err(|e| e.to_string())?;
+    let note_summaries = note_manager.list_notes(None).map_err(|e| e.to_string())?;
     let mut notes = Vec::new();
     
     // Load full notes

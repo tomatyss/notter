@@ -9,6 +9,41 @@ export interface AppConfig {
 }
 
 /**
+ * Options for sorting notes
+ */
+export enum SortOption {
+  /**
+   * Sort by title alphabetically (A-Z)
+   */
+  TitleAsc = "TitleAsc",
+  
+  /**
+   * Sort by title reverse alphabetically (Z-A)
+   */
+  TitleDesc = "TitleDesc",
+  
+  /**
+   * Sort by creation date (newest first)
+   */
+  CreatedNewest = "CreatedNewest",
+  
+  /**
+   * Sort by creation date (oldest first)
+   */
+  CreatedOldest = "CreatedOldest",
+  
+  /**
+   * Sort by modification date (newest first)
+   */
+  ModifiedNewest = "ModifiedNewest",
+  
+  /**
+   * Sort by modification date (oldest first)
+   */
+  ModifiedOldest = "ModifiedOldest"
+}
+
+/**
  * Represents the type of a note file
  */
 export enum NoteType {
