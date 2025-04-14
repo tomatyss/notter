@@ -9,13 +9,13 @@ use anyhow::Result;
 
 use config::{AppConfig, ConfigManager};
 use notes::{Note, NoteManager, NoteSummary};
-use search::{SearchManager, SearchResult};
+use search::{SearchService, SearchResult};
 
 /// Application state shared between commands
 struct AppState {
     config_manager: Mutex<ConfigManager>,
     note_manager: Mutex<Option<NoteManager>>,
-    search_manager: Mutex<SearchManager>,
+    search_service: Mutex<SearchService>,
 }
 
 /// Gets the current configuration
@@ -54,7 +54,7 @@ async fn select_folder(path: String, state: State<'_, AppState>) -> Result<AppCo
     *state.note_manager.lock().map_err(|e| e.to_string())? = Some(note_manager.clone());
     
     // Rebuild search index with all notes
-    let search_manager = state.search_manager.lock().map_err(|e| e.to_string())?;
+    let search_service = state.search_service.lock().map_err(|e| e.to_string())?;
     
     // Get all notes
     let note_summaries = note_manager.list_notes(None).map_err(|e| e.to_string())?;
@@ -67,7 +67,7 @@ async fn select_folder(path: String, state: State<'_, AppState>) -> Result<AppCo
     }
     
     // Rebuild index
-    search_manager.rebuild_index(&notes).map_err(|e| e.to_string())?;
+    search_service.rebuild_index(&notes).map_err(|e| e.to_string())?;
     
     Ok(config_manager.get_config())
 }
@@ -125,10 +125,10 @@ async fn search_notes(
     limit: Option<usize>,
     state: State<'_, AppState>
 ) -> Result<Vec<SearchResult>, String> {
-    let search_manager = state.search_manager.lock().map_err(|e| e.to_string())?;
+    let search_service = state.search_service.lock().map_err(|e| e.to_string())?;
     let limit = limit.unwrap_or(100);
     
-    search_manager.search(&query, limit).map_err(|e| e.to_string())
+    search_service.search(&query, limit).map_err(|e| e.to_string())
 }
 
 /// Rebuilds the search index with all notes
@@ -161,20 +161,20 @@ async fn rebuild_search_index(app_handle: tauri::AppHandle, state: State<'_, App
         notes.push(note);
     }
     
-    // Create a new search manager
-    println!("Creating new search manager...");
-    let new_search_manager = SearchManager::new(&app_dir)
-        .map_err(|e| format!("Failed to create new search manager: {}", e))?;
+    // Create a new search service
+    println!("Creating new search service...");
+    let new_search_service = SearchService::new(&app_dir)
+        .map_err(|e| format!("Failed to create new search service: {}", e))?;
     
-    // Rebuild index with the new search manager
+    // Rebuild index with the new search service
     println!("Rebuilding index with {} notes...", notes.len());
-    new_search_manager.rebuild_index(&notes)
+    new_search_service.rebuild_index(&notes)
         .map_err(|e| format!("Failed to rebuild index: {}", e))?;
     
-    // Update the search manager in the app state
-    println!("Updating search manager in app state...");
-    let mut search_manager_lock = state.search_manager.lock().map_err(|e| e.to_string())?;
-    *search_manager_lock = new_search_manager;
+    // Update the search service in the app state
+    println!("Updating search service in app state...");
+    let mut search_service_lock = state.search_service.lock().map_err(|e| e.to_string())?;
+    *search_service_lock = new_search_service;
     
     println!("Search index rebuilt successfully");
     Ok(())
@@ -193,9 +193,9 @@ pub fn run() {
             let config_manager = ConfigManager::new(&config_dir)
                 .expect("Failed to initialize config manager");
             
-            // Initialize search manager
-            let search_manager = SearchManager::new(&app_dir)
-                .expect("Failed to initialize search manager");
+            // Initialize search service
+            let search_service = SearchService::new(&app_dir)
+                .expect("Failed to initialize search service");
             
             // Initialize note manager if notes directory is configured
             let note_manager = if let Some(notes_dir) = config_manager.get_config().notes_dir {
@@ -208,7 +208,7 @@ pub fn run() {
             app.manage(AppState {
                 config_manager: Mutex::new(config_manager),
                 note_manager: Mutex::new(note_manager),
-                search_manager: Mutex::new(search_manager),
+                search_service: Mutex::new(search_service),
             });
             
             Ok(())
