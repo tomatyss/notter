@@ -13,6 +13,8 @@ import "./App.css";
  * @returns The main application UI
  */
 function App() {
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'notes' | 'settings'>('notes');
   // Application state
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [notes, setNotes] = useState<NoteSummary[]>([]);
@@ -114,25 +116,44 @@ function App() {
       
       <main className="app-content">
         <div className="sidebar">
-          <SettingsPanel 
-            config={config} 
-            onConfigUpdate={handleConfigUpdate} 
-            loading={configLoading} 
-          />
+          <div className="tab-navigation">
+            <button 
+              className={`tab-button ${activeTab === 'notes' ? 'active' : ''}`}
+              onClick={() => setActiveTab('notes')}
+            >
+              Notes
+            </button>
+            <button 
+              className={`tab-button ${activeTab === 'settings' ? 'active' : ''}`}
+              onClick={() => setActiveTab('settings')}
+            >
+              Settings
+            </button>
+          </div>
           
-          <SearchPanel
-            onSelectNote={handleSelectNote}
-            loading={configLoading || notesLoading}
-          />
-          
-          <NoteList 
-            notes={notes} 
-            onSelectNote={handleSelectNote}
-            selectedNoteId={selectedNoteId}
-            loading={notesLoading}
-            currentSort={sortOption}
-            onSortChange={handleSortChange}
-          />
+          {activeTab === 'notes' ? (
+            <>
+              <SearchPanel
+                onSelectNote={handleSelectNote}
+                loading={configLoading || notesLoading}
+              />
+              
+              <NoteList 
+                notes={notes} 
+                onSelectNote={handleSelectNote}
+                selectedNoteId={selectedNoteId}
+                loading={notesLoading}
+                currentSort={sortOption}
+                onSortChange={handleSortChange}
+              />
+            </>
+          ) : (
+            <SettingsPanel 
+              config={config} 
+              onConfigUpdate={handleConfigUpdate} 
+              loading={configLoading} 
+            />
+          )}
         </div>
         
         <div className="main-content">

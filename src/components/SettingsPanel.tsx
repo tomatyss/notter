@@ -107,40 +107,42 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   };
 
   return (
-    <div className="settings-panel">
+    <div className="settings-panel settings-tab">
       <h2>Settings</h2>
       
-      <div className="setting-item">
-        <label>Notes Directory</label>
-        <div className="folder-selector">
-          <input 
-            type="text" 
-            value={config?.notes_dir || 'No folder selected'} 
-            readOnly 
-            className="folder-path"
-          />
-          <button 
-            onClick={handleSelectFolder}
-            disabled={loading || selectingFolder}
-            className="select-folder-btn"
-          >
-            {loading ? 'Loading...' : selectingFolder ? 'Selecting...' : 'Select Folder'}
-          </button>
+      <div className="settings-content">
+        <div className="setting-item">
+          <label>Notes Directory</label>
+          <div className="folder-selector">
+            <input 
+              type="text" 
+              value={config?.notes_dir || 'No folder selected'} 
+              readOnly 
+              className="folder-path"
+            />
+            <button 
+              onClick={handleSelectFolder}
+              disabled={loading || selectingFolder}
+              className="select-folder-btn"
+            >
+              {loading ? 'Loading...' : selectingFolder ? 'Selecting...' : 'Select Folder'}
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div className="setting-item">
-        <label>Search Index</label>
-        <div className="action-buttons">
-          <button 
-            onClick={handleRebuildIndex}
-            disabled={loading || !config?.notes_dir || rebuildingIndex}
-            className="rebuild-index-btn"
-          >
-            {rebuildingIndex ? 'Rebuilding...' : 'Rebuild Search Index'}
-          </button>
-          {rebuildError && <div className="error-message">{rebuildError}</div>}
-          {rebuildSuccess && <div className="success-message">Search index rebuilt successfully!</div>}
+        <div className="setting-item">
+          <label>Search Index</label>
+          <div className="action-buttons">
+            <button 
+              onClick={handleRebuildIndex}
+              disabled={loading || !config?.notes_dir || rebuildingIndex}
+              className="rebuild-index-btn"
+            >
+              {rebuildingIndex ? 'Rebuilding...' : 'Rebuild Search Index'}
+            </button>
+            {rebuildError && <div className="error-message">{rebuildError}</div>}
+            {rebuildSuccess && <div className="success-message">Search index rebuilt successfully!</div>}
+          </div>
         </div>
       </div>
     </div>

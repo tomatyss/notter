@@ -58,6 +58,38 @@ body {
   overflow: hidden;
 }
 
+/* Tab Navigation */
+.tab-navigation {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tab-button {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--text-color);
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.tab-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.tab-button.active {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tab-button:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+}
+
 .main-content {
   flex: 1;
   overflow: auto;
@@ -70,9 +102,21 @@ body {
   border-bottom: 1px solid var(--border-color);
 }
 
+.settings-panel.settings-tab {
+  flex: 1;
+  overflow: auto;
+  border-bottom: none;
+  display: flex;
+  flex-direction: column;
+}
+
 .settings-panel h2 {
   margin-bottom: 1rem;
   font-size: 1.2rem;
+}
+
+.settings-content {
+  flex: 1;
 }
 
 .setting-item {
