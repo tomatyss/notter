@@ -16,6 +16,17 @@ interface SearchPanelProps {
    * Whether the component is in a loading state
    */
   loading: boolean;
+  
+  /**
+   * Function to determine whether to show the note list
+   * Returns true if note list should be shown, false otherwise
+   */
+  showNoteList?: (query: string) => boolean;
+  
+  /**
+   * Child components to render (typically the NoteList)
+   */
+  children?: React.ReactNode;
 }
 
 /**
@@ -26,7 +37,9 @@ interface SearchPanelProps {
  */
 export const SearchPanel: React.FC<SearchPanelProps> = ({ 
   onSelectNote,
-  loading 
+  loading,
+  showNoteList = () => true,
+  children
 }) => {
   // State
   const [query, setQuery] = useState('');
@@ -87,67 +100,72 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
   };
   
   return (
-    <div className="search-panel">
-      <div className="search-input-container">
-        <input
-          type="text"
-          className="search-input"
-          placeholder="Search notes..."
-          value={query}
-          onChange={handleQueryChange}
-          disabled={loading}
-        />
-        {searching && <div className="search-spinner"></div>}
+    <>
+      <div className="search-panel">
+        <div className="search-input-container">
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search notes..."
+            value={query}
+            onChange={handleQueryChange}
+            disabled={loading}
+          />
+          {searching && <div className="search-spinner"></div>}
+        </div>
+        
+        {error && (
+          <div className="search-error">
+            {error}
+          </div>
+        )}
+        
+        {results.length > 0 ? (
+          <div className="search-results">
+            <h3>Search Results</h3>
+            <ul className="results-list">
+              {results.map(result => (
+                <li 
+                  key={result.note.id} 
+                  className="search-result-item"
+                  onClick={() => handleResultClick(result.note.id)}
+                >
+                  <h4 className="result-title">{result.note.title}</h4>
+                  
+                  {result.snippets.length > 0 && (
+                    <div className="result-snippets">
+                      {result.snippets.map((snippet, index) => (
+                        <div 
+                          key={index}
+                          className="result-snippet"
+                          dangerouslySetInnerHTML={renderSnippet(snippet)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  
+                  {result.note.tags.length > 0 && (
+                    <div className="result-tags">
+                      {result.note.tags.map(tag => (
+                        <span key={tag} className="result-tag">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : query.trim() !== '' && !searching ? (
+          <div className="no-results">
+            No results found
+          </div>
+        ) : null}
       </div>
       
-      {error && (
-        <div className="search-error">
-          {error}
-        </div>
-      )}
-      
-      {results.length > 0 ? (
-        <div className="search-results">
-          <h3>Search Results</h3>
-          <ul className="results-list">
-            {results.map(result => (
-              <li 
-                key={result.note.id} 
-                className="search-result-item"
-                onClick={() => handleResultClick(result.note.id)}
-              >
-                <h4 className="result-title">{result.note.title}</h4>
-                
-                {result.snippets.length > 0 && (
-                  <div className="result-snippets">
-                    {result.snippets.map((snippet, index) => (
-                      <div 
-                        key={index}
-                        className="result-snippet"
-                        dangerouslySetInnerHTML={renderSnippet(snippet)}
-                      />
-                    ))}
-                  </div>
-                )}
-                
-                {result.note.tags.length > 0 && (
-                  <div className="result-tags">
-                    {result.note.tags.map(tag => (
-                      <span key={tag} className="result-tag">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : query.trim() !== '' && !searching ? (
-        <div className="no-results">
-          No results found
-        </div>
-      ) : null}
-    </div>
+      {/* Render children (NoteList) only when showNoteList returns true */}
+      {showNoteList(query) && children}
+    </>
   );
 };

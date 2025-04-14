@@ -136,16 +136,20 @@ function App() {
               <SearchPanel
                 onSelectNote={handleSelectNote}
                 loading={configLoading || notesLoading}
-              />
-              
-              <NoteList 
-                notes={notes} 
-                onSelectNote={handleSelectNote}
-                selectedNoteId={selectedNoteId}
-                loading={notesLoading}
-                currentSort={sortOption}
-                onSortChange={handleSortChange}
-              />
+                showNoteList={(query) => {
+                  // Only show note list when no search query is active
+                  return !query || query.trim() === '';
+                }}
+              >
+                <NoteList 
+                  notes={notes} 
+                  onSelectNote={handleSelectNote}
+                  selectedNoteId={selectedNoteId}
+                  loading={notesLoading}
+                  currentSort={sortOption}
+                  onSortChange={handleSortChange}
+                />
+              </SearchPanel>
             </>
           ) : (
             <SettingsPanel 

@@ -61,7 +61,8 @@ body {
 /* Tab Navigation */
 .tab-navigation {
   display: flex;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 2px solid var(--border-color);
+  background-color: #f0f0f0;
 }
 
 .tab-button {
@@ -69,10 +70,13 @@ body {
   padding: 0.75rem 1rem;
   background-color: transparent;
   border: none;
+  border-bottom: 3px solid transparent;
   cursor: pointer;
   font-weight: 500;
   color: var(--text-color);
-  transition: background-color 0.2s, color 0.2s;
+  transition: all 0.2s ease;
+  position: relative;
+  margin-bottom: -2px;
 }
 
 .tab-button:hover {
@@ -80,13 +84,30 @@ body {
 }
 
 .tab-button.active {
-  background-color: var(--primary-color);
-  color: white;
+  background-color: white;
+  color: var(--primary-color);
+  border-bottom: 3px solid var(--primary-color);
+  font-weight: 600;
 }
 
 @media (prefers-color-scheme: dark) {
+  .tab-navigation {
+    background-color: #2a2a2a;
+    border-bottom: 2px solid #444;
+  }
+  
+  .tab-button {
+    color: #f0f0f0;
+  }
+  
   .tab-button:hover {
     background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  .tab-button.active {
+    background-color: #1a1a1a;
+    color: var(--primary-color);
+    border-bottom: 3px solid var(--primary-color);
   }
 }
 
@@ -213,21 +234,44 @@ body {
   position: relative;
   display: flex;
   align-items: center;
+  margin-bottom: 1rem;
 }
 
 .search-input {
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.75rem 1rem;
+  padding-left: 2.5rem;
   border: 1px solid var(--border-color);
-  border-radius: 4px;
-  font-size: 0.9rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.search-input-container::before {
+  content: "";
+  position: absolute;
+  left: 0.75rem;
+  width: 16px;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  pointer-events: none;
 }
 
 .search-spinner {
   position: absolute;
   right: 10px;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border: 2px solid rgba(0, 0, 0, 0.1);
   border-top: 2px solid var(--primary-color);
   border-radius: 50%;
@@ -241,49 +285,69 @@ body {
 
 .search-results {
   margin-top: 1rem;
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 .search-results h3 {
   font-size: 1rem;
-  margin-bottom: 0.5rem;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--secondary-color);
+  font-weight: 600;
 }
 
 .results-list {
   list-style: none;
-  max-height: 300px;
+  max-height: 400px;
   overflow-y: auto;
 }
 
 .search-result-item {
-  padding: 0.75rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border-color);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .search-result-item:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(52, 152, 219, 0.05);
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
 }
 
 .result-title {
-  font-size: 0.9rem;
-  margin-bottom: 0.25rem;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: var(--secondary-color);
+  font-weight: 600;
 }
 
 .result-snippets {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: #666;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
 }
 
 .result-snippet {
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
+  padding-left: 0.5rem;
+  border-left: 2px solid #eee;
 }
 
 .result-snippet em {
   background-color: rgba(52, 152, 219, 0.2);
   font-style: normal;
   padding: 0 2px;
+  border-radius: 2px;
+  font-weight: 500;
 }
 
 .result-tags {
@@ -293,10 +357,13 @@ body {
 }
 
 .result-tag {
-  font-size: 0.7rem;
-  background-color: #eee;
-  padding: 0.1rem 0.4rem;
-  border-radius: 10px;
+  font-size: 0.75rem;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  margin: 0.1rem;
+  display: inline-block;
 }
 
 .search-error {
@@ -425,10 +492,13 @@ body {
 }
 
 .note-tag {
-  background-color: #eee;
-  padding: 0.1rem 0.4rem;
-  border-radius: 10px;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  margin: 0.1rem;
+  display: inline-block;
 }
 
 .loading-indicator {
@@ -578,6 +648,22 @@ body {
     color: #f0f0f0;
   }
   
+  .search-input {
+    background-color: #2a2a2a;
+    color: #f0f0f0;
+    border-color: #444;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .search-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+  }
+  
+  .search-input-container::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23777'%3E%3Cpath d='M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
+  }
+  
   .note-item:hover {
     background-color: rgba(255, 255, 255, 0.05);
   }
@@ -595,5 +681,41 @@ body {
   .note-content code,
   .plain-text-content {
     background-color: #2a2a2a;
+  }
+  
+  .search-results {
+    background-color: #2a2a2a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  .search-results h3 {
+    background-color: #333;
+    color: #f0f0f0;
+    border-bottom: 1px solid #444;
+  }
+  
+  .search-result-item {
+    border-bottom: 1px solid #444;
+  }
+  
+  .search-result-item:hover {
+    background-color: rgba(52, 152, 219, 0.1);
+  }
+  
+  .result-title {
+    color: var(--primary-color);
+  }
+  
+  .result-snippets {
+    color: #bbb;
+  }
+  
+  .result-snippet {
+    border-left: 2px solid #444;
+  }
+  
+  .result-snippet em {
+    background-color: rgba(52, 152, 219, 0.3);
+    color: #fff;
   }
 }
