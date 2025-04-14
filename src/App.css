@@ -241,6 +241,7 @@ body {
   width: 100%;
   padding: 0.75rem 1rem;
   padding-left: 2.5rem;
+  padding-right: 2.5rem; /* Make room for the clear button */
   border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 1rem;
@@ -265,6 +266,31 @@ body {
   background-position: center;
   background-size: contain;
   pointer-events: none;
+}
+
+.clear-search-button {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.clear-search-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--error-color);
+}
+
+.clear-search-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
 }
 
 .search-spinner {
@@ -689,6 +715,15 @@ body {
   
   .search-input-container::before {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23777'%3E%3Cpath d='M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
+  }
+  
+  .clear-search-button {
+    color: #777;
+  }
+  
+  .clear-search-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--error-color);
   }
   
   .note-item:hover {

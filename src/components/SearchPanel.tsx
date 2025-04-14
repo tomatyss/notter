@@ -103,6 +103,12 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
   const hasSearchResults = results.length > 0;
   const shouldShowNoteList = showNoteList(query);
   
+  // Handle clear search
+  const handleClearSearch = () => {
+    setQuery('');
+    setResults([]);
+  };
+  
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
       <div className="search-panel" style={{ flex: 'none' }}>
@@ -115,6 +121,18 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
             onChange={handleQueryChange}
             disabled={loading}
           />
+          {query && !searching && (
+            <button 
+              className="clear-search-button" 
+              onClick={handleClearSearch}
+              aria-label="Clear search"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          )}
           {searching && <div className="search-spinner"></div>}
         </div>
         
