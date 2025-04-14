@@ -99,9 +99,13 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
     return { __html: html };
   };
   
+  // Determine if we should show search results or note list
+  const hasSearchResults = results.length > 0;
+  const shouldShowNoteList = showNoteList(query);
+  
   return (
-    <>
-      <div className="search-panel">
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+      <div className="search-panel" style={{ flex: 'none' }}>
         <div className="search-input-container">
           <input
             type="text"
@@ -119,53 +123,52 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
             {error}
           </div>
         )}
-        
-        {results.length > 0 ? (
-          <div className="search-results">
-            <h3>Search Results</h3>
-            <ul className="results-list">
-              {results.map(result => (
-                <li 
-                  key={result.note.id} 
-                  className="search-result-item"
-                  onClick={() => handleResultClick(result.note.id)}
-                >
-                  <h4 className="result-title">{result.note.title}</h4>
-                  
-                  {result.snippets.length > 0 && (
-                    <div className="result-snippets">
-                      {result.snippets.map((snippet, index) => (
-                        <div 
-                          key={index}
-                          className="result-snippet"
-                          dangerouslySetInnerHTML={renderSnippet(snippet)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                  
-                  {result.note.tags.length > 0 && (
-                    <div className="result-tags">
-                      {result.note.tags.map(tag => (
-                        <span key={tag} className="result-tag">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : query.trim() !== '' && !searching ? (
-          <div className="no-results">
-            No results found
-          </div>
-        ) : null}
       </div>
       
-      {/* Render children (NoteList) only when showNoteList returns true */}
-      {showNoteList(query) && children}
-    </>
+      {hasSearchResults ? (
+        <div className="search-results">
+          <h3>Search Results</h3>
+          <ul className="results-list">
+            {results.map(result => (
+              <li 
+                key={result.note.id} 
+                className="search-result-item"
+                onClick={() => handleResultClick(result.note.id)}
+              >
+                <h4 className="result-title">{result.note.title}</h4>
+                
+                {result.snippets.length > 0 && (
+                  <div className="result-snippets">
+                    {result.snippets.map((snippet, index) => (
+                      <div 
+                        key={index}
+                        className="result-snippet"
+                        dangerouslySetInnerHTML={renderSnippet(snippet)}
+                      />
+                    ))}
+                  </div>
+                )}
+                
+                {result.note.tags.length > 0 && (
+                  <div className="result-tags">
+                    {result.note.tags.map(tag => (
+                      <span key={tag} className="result-tag">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : query.trim() !== '' && !searching ? (
+        <div className="no-results">
+          No results found
+        </div>
+      ) : shouldShowNoteList ? (
+        children
+      ) : null}
+    </div>
   );
 };

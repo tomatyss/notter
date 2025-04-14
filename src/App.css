@@ -289,6 +289,10 @@ body {
   border-radius: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  max-height: calc(100vh - 200px); /* Ensure it doesn't overflow the viewport */
 }
 
 .search-results h3 {
@@ -299,12 +303,14 @@ body {
   border-bottom: 1px solid var(--border-color);
   color: var(--secondary-color);
   font-weight: 600;
+  flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .results-list {
   list-style: none;
-  max-height: 400px;
+  flex: 1;
   overflow-y: auto;
+  max-height: 100%; /* Ensure it takes available space */
 }
 
 .search-result-item {
@@ -376,19 +382,36 @@ body {
 }
 
 .no-results {
-  margin-top: 0.5rem;
-  padding: 0.5rem;
+  margin-top: 1rem;
+  padding: 2rem;
   text-align: center;
   color: #666;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-style: italic;
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  .no-results {
+    background-color: #2a2a2a;
+    color: #bbb;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
 }
 
 /* Note List */
 .note-list {
   flex: 1;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
   padding: 1rem;
+  max-height: calc(100vh - 150px); /* Ensure it doesn't overflow the viewport */
 }
 
 .note-list-header {
@@ -396,6 +419,7 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
+  flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .note-list-header h2 {
@@ -408,6 +432,7 @@ body {
   padding: 0.5rem;
   background-color: rgba(0, 0, 0, 0.03);
   border-radius: 4px;
+  flex-shrink: 0; /* Prevent sort container from shrinking */
 }
 
 .sort-selector {
@@ -451,6 +476,8 @@ body {
 
 .notes-container {
   list-style: none;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .note-item {
