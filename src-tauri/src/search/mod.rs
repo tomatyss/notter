@@ -104,7 +104,7 @@ impl SearchManager {
         // Add fields to schema
         builder.add_text_field("id", TEXT | STORED);
         builder.add_text_field("title", TEXT | STORED);
-        builder.add_text_field("content", TEXT);
+        builder.add_text_field("content", TEXT | STORED);
         builder.add_text_field("tags", TEXT | STORED);
         builder.add_date_field("created", STORED);
         builder.add_date_field("modified", STORED);
@@ -207,7 +207,10 @@ impl SearchManager {
     /// # Returns
     /// List of search results
     pub fn search(&self, query_str: &str, limit: usize) -> Result<Vec<SearchResult>> {
+        println!("Searching for: {}", query_str);
+        
         let searcher = self.reader.searcher();
+        println!("Number of documents in index: {}", searcher.num_docs());
         
         // Create query parser
         let mut query_parser = QueryParser::for_index(&self.index, vec![
@@ -224,11 +227,15 @@ impl SearchManager {
         let query = query_parser.parse_query(query_str)
             .context("Failed to parse search query")?;
         
+        println!("Parsed query: {:?}", query);
+        
         // Search
         let top_docs = searcher.search(
             &query,
             &TopDocs::with_limit(limit),
         )?;
+        
+        println!("Search returned {} results", top_docs.len());
         
         // Create snippet generator for highlighting
         let mut snippet_generator = SnippetGenerator::create(
@@ -331,14 +338,59 @@ impl SearchManager {
     /// # Returns
     /// Result indicating success or failure
     pub fn rebuild_index(&self, notes: &[Note]) -> Result<()> {
-        // Delete existing index
-        let mut writer = self.index.writer(50_000_000)
-            .context("Failed to create index writer")?;
-        writer.delete_all_documents()?;
+        println!("Rebuilding search index with {} notes", notes.len());
+        
+        // Try to recreate the index from scratch
+        println!("Creating new index at {:?}", self.index_path);
+        
+        // First try to delete the existing index directory
+        if self.index_path.exists() {
+            println!("Removing existing index directory");
+            match std::fs::remove_dir_all(&self.index_path) {
+                Ok(_) => println!("Successfully removed existing index directory"),
+                Err(e) => println!("Warning: Failed to remove existing index directory: {}", e),
+            }
+            
+            // Recreate the directory
+            std::fs::create_dir_all(&self.index_path)
+                .context("Failed to create search index directory")?;
+        }
+        
+        // Create a new schema
+        let schema = Self::create_schema()?;
+        
+        // Create a new index
+        let index = Index::create_in_dir(&self.index_path, schema)
+            .context("Failed to create new search index")?;
+        
+        // Create a writer with the new index
+        let mut writer = index.writer(50_000_000)
+            .context("Failed to create index writer for new index")?;
+        
+        println!("Indexing {} notes", notes.len());
+        
+        // Add all notes to the index
+        for note in notes {
+            let tags_str = note.tags.join(" ");
+            let file_type_str = format!("{:?}", note.file_type);
+            
+            writer.add_document(doc!(
+                self.id_field => note.id.clone(),
+                self.title_field => note.title.clone(),
+                self.content_field => note.content.clone(),
+                self.tags_field => tags_str,
+                self.created_field => tantivy::DateTime::from_timestamp_secs(note.created.timestamp()),
+                self.modified_field => tantivy::DateTime::from_timestamp_secs(note.modified.timestamp()),
+                self.file_type_field => file_type_str
+            ))?;
+        }
+        
+        // Commit the changes
+        println!("Committing changes to index");
         writer.commit()?;
         
-        // Reindex all notes
-        self.index_notes(notes)
+        println!("Search index rebuilt successfully");
+        Ok(())
     }
 }
 

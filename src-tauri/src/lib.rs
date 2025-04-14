@@ -136,8 +136,13 @@ async fn search_notes(
 /// # Returns
 /// Result indicating success or failure
 #[tauri::command]
-async fn rebuild_search_index(state: State<'_, AppState>) -> Result<(), String> {
-    let search_manager = state.search_manager.lock().map_err(|e| e.to_string())?;
+async fn rebuild_search_index(app_handle: tauri::AppHandle, state: State<'_, AppState>) -> Result<(), String> {
+    println!("Rebuilding search index...");
+    
+    // Get the app data directory
+    let app_dir = app_handle.path().app_data_dir().expect("Failed to get app data directory");
+    
+    // Get note manager
     let note_manager_lock = state.note_manager.lock().map_err(|e| e.to_string())?;
     
     let Some(note_manager) = note_manager_lock.as_ref() else {
@@ -145,17 +150,34 @@ async fn rebuild_search_index(state: State<'_, AppState>) -> Result<(), String> 
     };
     
     // Get all notes
+    println!("Getting all notes...");
     let note_summaries = note_manager.list_notes(None).map_err(|e| e.to_string())?;
     let mut notes = Vec::new();
     
     // Load full notes
+    println!("Loading full notes...");
     for summary in note_summaries {
         let note = note_manager.get_note(&summary.id).map_err(|e| e.to_string())?;
         notes.push(note);
     }
     
-    // Rebuild index
-    search_manager.rebuild_index(&notes).map_err(|e| e.to_string())
+    // Create a new search manager
+    println!("Creating new search manager...");
+    let new_search_manager = SearchManager::new(&app_dir)
+        .map_err(|e| format!("Failed to create new search manager: {}", e))?;
+    
+    // Rebuild index with the new search manager
+    println!("Rebuilding index with {} notes...", notes.len());
+    new_search_manager.rebuild_index(&notes)
+        .map_err(|e| format!("Failed to rebuild index: {}", e))?;
+    
+    // Update the search manager in the app state
+    println!("Updating search manager in app state...");
+    let mut search_manager_lock = state.search_manager.lock().map_err(|e| e.to_string())?;
+    *search_manager_lock = new_search_manager;
+    
+    println!("Search index rebuilt successfully");
+    Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

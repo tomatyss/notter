@@ -34,13 +34,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onConfigUpdate,
   loading 
 }) => {
-  /**
-   * Handles folder selection using a dialog
-   * Opens a folder selection dialog and updates the configuration
-   * with the selected folder path
-   */
-  // Local loading state for folder selection
+  // Local loading states
   const [selectingFolder, setSelectingFolder] = useState(false);
+  const [rebuildingIndex, setRebuildingIndex] = useState(false);
+  const [rebuildError, setRebuildError] = useState<string | null>(null);
+  const [rebuildSuccess, setRebuildSuccess] = useState(false);
 
   /**
    * Handles folder selection using a dialog
@@ -77,6 +75,37 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     }
   };
 
+  /**
+   * Handles rebuilding the search index
+   * Triggers a backend command to rebuild the search index
+   */
+  const handleRebuildIndex = async () => {
+    if (!config?.notes_dir) {
+      setRebuildError('No notes directory selected');
+      return;
+    }
+
+    try {
+      setRebuildingIndex(true);
+      setRebuildError(null);
+      setRebuildSuccess(false);
+      
+      await invoke('rebuild_search_index');
+      
+      setRebuildSuccess(true);
+      setRebuildingIndex(false);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setRebuildSuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Failed to rebuild search index:', error);
+      setRebuildError(`Failed to rebuild search index: ${error}`);
+      setRebuildingIndex(false);
+    }
+  };
+
   return (
     <div className="settings-panel">
       <h2>Settings</h2>
@@ -97,6 +126,21 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           >
             {loading ? 'Loading...' : selectingFolder ? 'Selecting...' : 'Select Folder'}
           </button>
+        </div>
+      </div>
+
+      <div className="setting-item">
+        <label>Search Index</label>
+        <div className="action-buttons">
+          <button 
+            onClick={handleRebuildIndex}
+            disabled={loading || !config?.notes_dir || rebuildingIndex}
+            className="rebuild-index-btn"
+          >
+            {rebuildingIndex ? 'Rebuilding...' : 'Rebuild Search Index'}
+          </button>
+          {rebuildError && <div className="error-message">{rebuildError}</div>}
+          {rebuildSuccess && <div className="success-message">Search index rebuilt successfully!</div>}
         </div>
       </div>
     </div>

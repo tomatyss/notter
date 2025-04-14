@@ -118,6 +118,47 @@ body {
   cursor: not-allowed;
 }
 
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rebuild-index-btn {
+  padding: 0.5rem 1rem;
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.rebuild-index-btn:hover {
+  background-color: #34495e;
+}
+
+.rebuild-index-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.error-message {
+  padding: 0.5rem;
+  background-color: rgba(231, 76, 60, 0.1);
+  color: var(--error-color);
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.success-message {
+  padding: 0.5rem;
+  background-color: rgba(46, 204, 113, 0.1);
+  color: var(--success-color);
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
 /* Search Panel */
 .search-panel {
   padding: 1rem;
