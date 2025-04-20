@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use walkdir::WalkDir;
 use base64::Engine;
+use natord::compare;
 
 /// Options for sorting notes
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -114,8 +115,9 @@ impl NoteManager {
         
         // Apply sorting based on the provided option
         match sort.unwrap_or(SortOption::ModifiedNewest) {
-            SortOption::TitleAsc => notes.sort_by(|a, b| a.title.cmp(&b.title)),
-            SortOption::TitleDesc => notes.sort_by(|a, b| b.title.cmp(&a.title)),
+            // Use natural sorting for title comparisons
+            SortOption::TitleAsc => notes.sort_by(|a, b| compare(&a.title, &b.title)),
+            SortOption::TitleDesc => notes.sort_by(|a, b| compare(&b.title, &a.title)),
             SortOption::CreatedNewest => notes.sort_by(|a, b| b.created.cmp(&a.created)),
             SortOption::CreatedOldest => notes.sort_by(|a, b| a.created.cmp(&b.created)),
             SortOption::ModifiedNewest => notes.sort_by(|a, b| b.modified.cmp(&a.modified)),
