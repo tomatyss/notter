@@ -152,6 +152,25 @@ async fn rename_note(id: String, new_name: String, state: State<'_, AppState>) -
     note_manager.rename_note(&id, &new_name).map_err(|e| e.to_string())
 }
 
+/// Moves a note to a different path
+/// 
+/// # Parameters
+/// * `id` - ID of the note to move
+/// * `new_path` - New relative path for the note (including filename)
+/// 
+/// # Returns
+/// The updated note with new ID
+#[tauri::command]
+async fn move_note(id: String, new_path: String, state: State<'_, AppState>) -> Result<Note, String> {
+    let note_manager_lock = state.note_manager.lock().map_err(|e| e.to_string())?;
+    
+    let Some(note_manager) = note_manager_lock.as_ref() else {
+        return Err("Note manager not initialized".into());
+    };
+    
+    note_manager.move_note(&id, &new_path).map_err(|e| e.to_string())
+}
+
 /// Searches for notes matching the query
 /// 
 /// # Parameters
@@ -301,6 +320,7 @@ pub fn run() {
             get_note,
             update_note_content,
             rename_note,
+            move_note,
             search_notes,
             rebuild_search_index,
         ])

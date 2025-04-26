@@ -167,6 +167,33 @@ function App() {
       setNoteLoading(false);
     }
   };
+  
+  // Handle note path change
+  const handleNoteMoveToPath = async (id: string, newPath: string) => {
+    try {
+      // Don't set loading state to avoid UI flicker during path change
+      // setNoteLoading(true);
+      
+      // Move the note to the new path
+      const updatedNote = await invoke<Note>('move_note', { id, newPath });
+      
+      // Update the selected note
+      setSelectedNote(updatedNote);
+      setSelectedNoteId(updatedNote.id); // ID might have changed due to path change
+      
+      // Update the note in the notes list
+      // We'll do this in the background to avoid UI refresh during editing
+      setTimeout(() => {
+        loadNotes();
+      }, 100);
+      
+      // Don't set loading state to false here to avoid UI flicker
+      // setNoteLoading(false);
+    } catch (err) {
+      setError(`Failed to move note: ${err}`);
+      setNoteLoading(false);
+    }
+  };
 
   // Clear error message
   const clearError = () => setError(null);
@@ -226,6 +253,7 @@ function App() {
               loading={noteLoading}
               onNoteContentUpdate={handleNoteContentUpdate}
               onNoteRename={handleNoteRename}
+              onNotePathChange={handleNoteMoveToPath}
             />
           </div>
         </main>

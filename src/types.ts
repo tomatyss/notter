@@ -96,6 +96,11 @@ export interface Note {
    * Type of the note (markdown or plain text)
    */
   file_type: NoteType;
+  
+  /**
+   * File path relative to the notes directory
+   */
+  path: string;
 }
 
 /**

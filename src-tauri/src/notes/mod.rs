@@ -52,6 +52,8 @@ pub struct Note {
     pub tags: Vec<String>,
     /// Type of the note (markdown or plain text)
     pub file_type: NoteType,
+    /// File path relative to the notes directory
+    pub path: String,
 }
 
 /// Represents a note summary for listing
@@ -250,6 +252,12 @@ impl NoteManager {
         // Generate ID from file path
         let id = self.path_to_id(path)?;
         
+        // Get relative path from notes directory
+        let relative_path = path.strip_prefix(&self.notes_dir)
+            .context("Path is not in notes directory")?
+            .to_string_lossy()
+            .to_string();
+        
         Ok(Note {
             id,
             title,
@@ -258,6 +266,7 @@ impl NoteManager {
             modified,
             tags,
             file_type,
+            path: relative_path,
         })
     }
     
@@ -392,6 +401,40 @@ impl NoteManager {
         // Rename the file
         fs::rename(&current_path, &new_path)
             .context("Failed to rename note file")?;
+        
+        // Return the updated note
+        self.read_note(&new_path)
+    }
+    
+    /// Moves a note to a different path
+    /// 
+    /// # Parameters
+    /// * `id` - ID of the note to move
+    /// * `new_path` - New relative path for the note (including filename)
+    /// 
+    /// # Returns
+    /// The updated note with new ID
+    pub fn move_note(&self, id: &str, new_relative_path: &str) -> Result<Note> {
+        // Get the current file path from the ID
+        let current_path = self.get_note_path(id)?;
+        
+        // Create the new absolute path
+        let new_path = self.notes_dir.join(new_relative_path);
+        
+        // Ensure the parent directory exists
+        if let Some(parent) = new_path.parent() {
+            fs::create_dir_all(parent)
+                .context("Failed to create parent directories")?;
+        }
+        
+        // Check if the new path already exists
+        if new_path.exists() {
+            anyhow::bail!("A file already exists at the target path");
+        }
+        
+        // Move the file
+        fs::rename(&current_path, &new_path)
+            .context("Failed to move note file")?;
         
         // Return the updated note
         self.read_note(&new_path)

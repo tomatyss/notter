@@ -27,6 +27,11 @@ interface NoteViewerProps {
    * Callback when note is renamed
    */
   onNoteRename?: (id: string, newName: string) => void;
+  
+  /**
+   * Callback when note path is changed
+   */
+  onNotePathChange?: (id: string, newPath: string) => void;
 }
 
 /**
@@ -39,7 +44,8 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   note, 
   loading, 
   onNoteContentUpdate,
-  onNoteRename
+  onNoteRename,
+  onNotePathChange
 }) => {
   // State for edit mode
   const [isEditing, setIsEditing] = useState(false);
@@ -48,6 +54,9 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   // State for edited title (for renaming)
   const [isRenamingTitle, setIsRenamingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
+  // State for edited path
+  const [isEditingPath, setIsEditingPath] = useState(false);
+  const [editedPath, setEditedPath] = useState('');
   // State for saving status
   const [isSaving, setIsSaving] = useState(false);
   // State for error message
@@ -55,18 +64,22 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   // Refs for autosave timers
   const contentAutosaveTimerRef = useRef<number | null>(null);
   const titleAutosaveTimerRef = useRef<number | null>(null);
+  const pathAutosaveTimerRef = useRef<number | null>(null);
   // Refs for content and title elements
   const contentRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const pathRef = useRef<HTMLDivElement>(null);
   
   // Reset states when note changes
   useEffect(() => {
     if (note) {
       setEditedContent(note.content);
       setEditedTitle(note.title);
+      setEditedPath(note.path);
     }
     setIsEditing(false);
     setIsRenamingTitle(false);
+    setIsEditingPath(false);
     setError(null);
     
     // Clear any pending autosave timers
@@ -75,6 +88,9 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
     }
     if (titleAutosaveTimerRef.current) {
       clearTimeout(titleAutosaveTimerRef.current);
+    }
+    if (pathAutosaveTimerRef.current) {
+      clearTimeout(pathAutosaveTimerRef.current);
     }
   }, [note]);
   
@@ -86,6 +102,9 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       }
       if (titleAutosaveTimerRef.current) {
         clearTimeout(titleAutosaveTimerRef.current);
+      }
+      if (pathAutosaveTimerRef.current) {
+        clearTimeout(pathAutosaveTimerRef.current);
       }
     };
   }, []);
@@ -112,6 +131,17 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
     }
   };
   
+  // Handle path changes - only save on blur, not during typing
+  const handlePathChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPath = e.target.value;
+    setEditedPath(newPath);
+    
+    // Clear any existing timer to prevent autosave during path editing
+    if (pathAutosaveTimerRef.current) {
+      clearTimeout(pathAutosaveTimerRef.current);
+    }
+  };
+  
   // Handle double click on content to edit
   const handleContentDoubleClick = () => {
     if (!isEditing && !loading && note) {
@@ -123,6 +153,13 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   const handleTitleDoubleClick = () => {
     if (!isRenamingTitle && !loading && note) {
       setIsRenamingTitle(true);
+    }
+  };
+  
+  // Handle double click on path to edit
+  const handlePathDoubleClick = () => {
+    if (!isEditingPath && !loading && note) {
+      setIsEditingPath(true);
     }
   };
   
@@ -178,6 +215,32 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
     }
   };
   
+  // Save path changes
+  const savePath = async (path = editedPath) => {
+    if (!note) return;
+    
+    try {
+      setIsSaving(true);
+      setError(null);
+      
+      if (onNotePathChange) {
+        // Use the callback to change the note path
+        await onNotePathChange(note.id, path);
+      } else {
+        // Fallback to direct API call if no callback provided
+        await invoke<Note>('move_note', {
+          id: note.id,
+          newPath: path
+        });
+      }
+      
+      setIsSaving(false);
+    } catch (err) {
+      setError(`Failed to change note path: ${err}`);
+      setIsSaving(false);
+    }
+  };
+  
   // Handle blur events to exit edit mode and save
   const handleContentBlur = () => {
     // Save the content when the textarea loses focus
@@ -221,6 +284,28 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
     else if (e.key === 'Escape') {
       setEditedTitle(note?.title || '');
       setIsRenamingTitle(false);
+    }
+  };
+  
+  // Handle blur events to exit path edit mode and save
+  const handlePathBlur = () => {
+    // Save the path when the input loses focus
+    savePath();
+    // Exit path edit mode after saving
+    setIsEditingPath(false);
+  };
+  
+  // Handle key press in path input
+  const handlePathKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Save and exit on Enter key
+    if (e.key === 'Enter') {
+      savePath();
+      setIsEditingPath(false);
+    }
+    // Cancel on Escape key
+    else if (e.key === 'Escape') {
+      setEditedPath(note?.path || '');
+      setIsEditingPath(false);
     }
   };
   if (loading) {
@@ -279,6 +364,30 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
               Modified: {format(new Date(note.modified), 'MMM d, yyyy h:mm a')}
             </span>
           </div>
+          {isEditingPath ? (
+            <div className="note-path-edit">
+              <span className="path-label">Path:</span>
+              <input
+                type="text"
+                value={editedPath}
+                onChange={handlePathChange}
+                onBlur={handlePathBlur}
+                onKeyDown={handlePathKeyPress}
+                className="path-input"
+                autoFocus
+              />
+              {isSaving && <span className="autosave-indicator">Saving...</span>}
+            </div>
+          ) : (
+            <div 
+              className="note-path editable" 
+              onDoubleClick={handlePathDoubleClick}
+              ref={pathRef}
+              title="Double-click to edit"
+            >
+              <span className="path-label">Path:</span> {note.path}
+            </div>
+          )}
           {note.tags.length > 0 && (
             <div className="note-tags">
               {note.tags.map(tag => (

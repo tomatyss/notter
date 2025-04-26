@@ -638,6 +638,68 @@ body {
   color: #666;
 }
 
+.note-path {
+  font-size: 0.8rem;
+  color: #666;
+  padding: 0.25rem 0;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.03);
+  padding: 0.25rem 0.5rem;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.note-path-edit {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.note-path-edit::after {
+  content: "Press Enter to save, Esc to cancel";
+  position: absolute;
+  bottom: -20px;
+  right: 0;
+  font-size: 0.75rem;
+  color: #666;
+  font-style: italic;
+}
+
+.path-input {
+  flex: 1;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  margin-left: 0.5rem;
+}
+
+.path-label {
+  font-weight: 600;
+  margin-right: 0.25rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .note-path {
+    color: #bbb;
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  .note-path-edit::after {
+    color: #999;
+  }
+  
+  .path-input {
+    background-color: #2a2a2a;
+    color: #f0f0f0;
+    border-color: #444;
+  }
+}
+
 .autosave-indicator {
   font-size: 0.8rem;
   color: var(--primary-color);
