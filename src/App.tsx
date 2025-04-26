@@ -194,6 +194,29 @@ function App() {
       setNoteLoading(false);
     }
   };
+  
+  // Handle new note creation
+  const handleNoteCreated = (newNote: Note) => {
+    // Update the notes list
+    setNotes(prevNotes => [
+      {
+        id: newNote.id,
+        title: newNote.title,
+        created: newNote.created,
+        modified: newNote.modified,
+        tags: newNote.tags,
+        file_type: newNote.file_type
+      },
+      ...prevNotes
+    ]);
+    
+    // Select the new note
+    setSelectedNoteId(newNote.id);
+    setSelectedNote(newNote);
+    
+    // Ensure we're on the notes tab
+    setActiveTab('notes');
+  };
 
   // Clear error message
   const clearError = () => setError(null);
@@ -231,6 +254,7 @@ function App() {
                   <NoteList 
                     notes={notes} 
                     onSelectNote={handleSelectNote}
+                    onNoteCreated={handleNoteCreated}
                     selectedNoteId={selectedNoteId}
                     loading={notesLoading}
                     currentSort={sortOption}

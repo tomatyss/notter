@@ -12,6 +12,7 @@ pub struct SearchOptions {
     /// Maximum length of snippet in characters
     pub snippet_length: usize,
     /// HTML tag to use for highlighting matches
+    #[allow(dead_code)]
     pub highlight_tag: String,
 }
 
@@ -54,6 +55,7 @@ pub trait QueryEngine {
     fn search(&self, query: &str, options: &SearchOptions) -> Result<Vec<SearchHit>, SearchError>;
     
     /// Search for documents with a specific field value
+    #[allow(dead_code)]
     fn search_by_field(&self, field: &str, value: &str, options: &SearchOptions) -> Result<Vec<SearchHit>, SearchError>;
 }
 

@@ -66,6 +66,7 @@ impl SearchService {
     /// 
     /// # Returns
     /// Result indicating success or failure
+    #[allow(dead_code)]
     pub fn index_note(&self, note: &Note) -> Result<(), SearchError> {
         let document = self.document_converter.note_to_document(note);
         self.index.add_document(&document)
@@ -78,6 +79,7 @@ impl SearchService {
     /// 
     /// # Returns
     /// Result indicating success or failure
+    #[allow(dead_code)]
     pub fn remove_note(&self, id: &str) -> Result<(), SearchError> {
         self.index.remove_document(id)
     }
@@ -130,6 +132,7 @@ impl SearchService {
     /// 
     /// # Returns
     /// List of search results
+    #[allow(dead_code)]
     pub fn search_by_field(&self, field: &str, value: &str, limit: usize) -> Result<Vec<SearchResult>, SearchError> {
         let options = SearchOptions {
             limit,
@@ -185,6 +188,7 @@ impl SearchService {
     /// 
     /// # Returns
     /// Number of documents in the index
+    #[allow(dead_code)]
     pub fn document_count(&self) -> Result<usize, SearchError> {
         self.index.document_count()
     }
@@ -193,6 +197,7 @@ impl SearchService {
     /// 
     /// # Returns
     /// Result indicating success or failure
+    #[allow(dead_code)]
     pub fn optimize(&self) -> Result<(), SearchError> {
         self.index.optimize()
     }

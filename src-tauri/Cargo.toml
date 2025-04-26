@@ -29,8 +29,9 @@ base64 = "0.21"
 anyhow = "1.0"
 tantivy = "0.21.0"
 tempfile = "3.8.0"  # For temporary directories during testing
-zstd-sys = "=2.0.8+zstd.1.5.5"  # Pin to a specific version to avoid compatibility issues
+zstd-sys = "=2.0.8"  # Pin to a specific version to avoid compatibility issues
 log = "0.4"  # Logging facade
 env_logger = "0.10"  # Logging implementation
 thiserror = "1.0"  # Error handling
 natord = "1.0.9"  # Natural ordering for strings with numeric components
+regex = "1.9.5"  # Regular expressions for pattern matching

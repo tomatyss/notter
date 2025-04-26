@@ -22,18 +22,23 @@ pub struct IndexableDocument {
 /// Interface for search index operations
 pub trait SearchIndex {
     /// Add a document to the index
+    #[allow(dead_code)]
     fn add_document(&self, document: &IndexableDocument) -> Result<(), SearchError>;
     
     /// Remove a document from the index
+    #[allow(dead_code)]
     fn remove_document(&self, id: &str) -> Result<(), SearchError>;
     
     /// Clear the entire index
+    #[allow(dead_code)]
     fn clear(&self) -> Result<(), SearchError>;
     
     /// Optimize the index for better performance
+    #[allow(dead_code)]
     fn optimize(&self) -> Result<(), SearchError>;
     
     /// Get the number of documents in the index
+    #[allow(dead_code)]
     fn document_count(&self) -> Result<usize, SearchError>;
     
     /// Rebuild the index with the given documents

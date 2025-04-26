@@ -6,6 +6,7 @@ use anyhow::{Context, Result};
 use walkdir::WalkDir;
 use base64::Engine;
 use natord::compare;
+use regex::Regex;
 #[cfg(target_os = "ios")]
 use std::sync::Arc;
 
@@ -438,6 +439,134 @@ impl NoteManager {
         
         // Return the updated note
         self.read_note(&new_path)
+    }
+    
+    /// Creates a new note file
+    /// 
+    /// # Parameters
+    /// * `title` - Title of the note
+    /// * `content` - Initial content of the note
+    /// * `file_type` - Type of note (Markdown or PlainText)
+    /// * `pattern` - Optional naming pattern (e.g., "{number}-{title}")
+    /// 
+    /// # Returns
+    /// The newly created note
+    pub fn create_note(&self, title: &str, content: &str, file_type: NoteType, pattern: Option<&str>) -> Result<Note> {
+        // Generate filename based on pattern or use title directly
+        let filename = if let Some(pattern) = pattern {
+            self.generate_filename_from_pattern(title, pattern, &file_type)?
+        } else {
+            format!("{}.{}", title, self.get_extension_for_type(&file_type))
+        };
+        
+        // Create the full path
+        let file_path = self.notes_dir.join(&filename);
+        
+        // Check if file already exists
+        if file_path.exists() {
+            anyhow::bail!("A note with this name already exists");
+        }
+        
+        // Write content to file
+        fs::write(&file_path, content)
+            .context("Failed to write note file")?;
+        
+        // Read the newly created note
+        self.read_note(&file_path)
+    }
+    
+    /// Generates a filename based on a pattern
+    /// 
+    /// # Parameters
+    /// * `title` - Title of the note
+    /// * `pattern` - Naming pattern (e.g., "{number}-{title}")
+    /// * `file_type` - Type of note (Markdown or PlainText)
+    /// 
+    /// # Returns
+    /// The generated filename
+    fn generate_filename_from_pattern(&self, title: &str, pattern: &str, file_type: &NoteType) -> Result<String> {
+        let extension = self.get_extension_for_type(file_type);
+        
+        // If pattern contains {number}, find the highest number and increment
+        if pattern.contains("{number}") {
+            let highest_number = self.find_highest_number_in_notes(pattern)?;
+            let next_number = highest_number + 1;
+            
+            // Replace placeholders in pattern
+            let filename = pattern
+                .replace("{number}", &next_number.to_string())
+                .replace("{title}", title)
+                .replace("{extension}", extension);
+            
+            Ok(filename)
+        } else {
+            // Simple replacement without number logic
+            let filename = pattern
+                .replace("{title}", title)
+                .replace("{extension}", extension);
+            
+            Ok(filename)
+        }
+    }
+    
+    /// Finds the highest number used in existing note filenames that follow a pattern
+    /// 
+    /// # Parameters
+    /// * `pattern` - Naming pattern to match
+    /// 
+    /// # Returns
+    /// The highest number found, or 0 if none found
+    fn find_highest_number_in_notes(&self, pattern: &str) -> Result<u32> {
+        let mut highest_number = 0;
+        
+        // Create a regex pattern from the naming pattern
+        // This converts "{number}-{title}" to something like "(\d+)-.*"
+        let regex_pattern = pattern
+            .replace("{number}", r"(\d+)")
+            .replace("{title}", ".*")
+            .replace("{extension}", "");
+        
+        let regex = Regex::new(&regex_pattern)
+            .context("Failed to create regex from pattern")?;
+        
+        // Scan all notes in the directory
+        for entry in WalkDir::new(&self.notes_dir)
+            .max_depth(1) // Only look at root directory
+            .into_iter()
+            .filter_map(|e| e.ok())
+        {
+            let path = entry.path();
+            
+            if path.is_file() {
+                if let Some(filename) = path.file_name().and_then(|n| n.to_str()) {
+                    if let Some(captures) = regex.captures(filename) {
+                        if let Some(number_match) = captures.get(1) {
+                            if let Ok(number) = number_match.as_str().parse::<u32>() {
+                                if number > highest_number {
+                                    highest_number = number;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        Ok(highest_number)
+    }
+    
+    /// Gets the file extension for a note type
+    /// 
+    /// # Parameters
+    /// * `file_type` - Type of note
+    /// 
+    /// # Returns
+    /// The file extension without the dot
+    fn get_extension_for_type(&self, file_type: &NoteType) -> &str {
+        match file_type {
+            NoteType::Markdown => "md",
+            NoteType::PlainText => "txt",
+        }
     }
     
     /// Converts a file path to a note ID

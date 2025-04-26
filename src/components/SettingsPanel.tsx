@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 import { AppConfig } from '../types';
@@ -34,11 +34,24 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onConfigUpdate,
   loading 
 }) => {
-  // Local loading states
+  // Local state
   const [selectingFolder, setSelectingFolder] = useState(false);
   const [rebuildingIndex, setRebuildingIndex] = useState(false);
   const [rebuildError, setRebuildError] = useState<string | null>(null);
   const [rebuildSuccess, setRebuildSuccess] = useState(false);
+  const [namingPattern, setNamingPattern] = useState<string>('');
+  const [savingPattern, setSavingPattern] = useState(false);
+  const [patternError, setPatternError] = useState<string | null>(null);
+  const [patternSuccess, setPatternSuccess] = useState(false);
+  
+  // Initialize naming pattern from config
+  useEffect(() => {
+    if (config?.note_naming_pattern) {
+      setNamingPattern(config.note_naming_pattern);
+    } else {
+      setNamingPattern('{number}-{title}.{extension}');
+    }
+  }, [config]);
 
   /**
    * Handles folder selection using a dialog
@@ -106,6 +119,41 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     }
   };
 
+  /**
+   * Handles saving the note naming pattern
+   * Updates the configuration with the new pattern
+   */
+  const handleSavePattern = async () => {
+    if (!namingPattern.includes('{title}')) {
+      setPatternError('Pattern must include {title} placeholder');
+      return;
+    }
+    
+    try {
+      setSavingPattern(true);
+      setPatternError(null);
+      setPatternSuccess(false);
+      
+      // Update configuration with new pattern
+      const updatedConfig = await invoke<AppConfig>('set_note_naming_pattern', {
+        pattern: namingPattern
+      });
+      
+      onConfigUpdate(updatedConfig);
+      setPatternSuccess(true);
+      setSavingPattern(false);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setPatternSuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Failed to save naming pattern:', error);
+      setPatternError(`Failed to save naming pattern: ${error}`);
+      setSavingPattern(false);
+    }
+  };
+
   return (
     <div className="settings-panel settings-tab">
       <h2>Settings</h2>
@@ -128,6 +176,31 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               {loading ? 'Loading...' : selectingFolder ? 'Selecting...' : 'Select Folder'}
             </button>
           </div>
+        </div>
+        
+        <div className="setting-item">
+          <label>Note Naming Pattern</label>
+          <div className="pattern-selector">
+            <input 
+              type="text" 
+              value={namingPattern} 
+              onChange={(e) => setNamingPattern(e.target.value)}
+              className="pattern-input"
+              placeholder="e.g., {number}-{title}.{extension}"
+            />
+            <button 
+              onClick={handleSavePattern}
+              disabled={loading || savingPattern}
+              className="save-pattern-btn"
+            >
+              {savingPattern ? 'Saving...' : 'Save Pattern'}
+            </button>
+          </div>
+          <div className="pattern-help">
+            Available placeholders: {'{number}'}, {'{title}'}, {'{extension}'}
+          </div>
+          {patternError && <div className="error-message">{patternError}</div>}
+          {patternSuccess && <div className="success-message">Naming pattern saved successfully!</div>}
         </div>
 
         <div className="setting-item">

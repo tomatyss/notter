@@ -8,6 +8,11 @@ use anyhow::{Context, Result};
 pub struct AppConfig {
     /// Path to the directory containing notes
     pub notes_dir: Option<PathBuf>,
+    
+    /// Pattern for naming new notes
+    /// Supports placeholders: {number}, {title}, {extension}
+    #[serde(default)]
+    pub note_naming_pattern: Option<String>,
 }
 
 impl Default for AppConfig {
@@ -18,6 +23,7 @@ impl Default for AppConfig {
     fn default() -> Self {
         Self {
             notes_dir: None,
+            note_naming_pattern: Some("{number}-{title}.{extension}".to_string()),
         }
     }
 }
@@ -90,6 +96,24 @@ impl ConfigManager {
         
         // Update config
         self.config.notes_dir = Some(path);
+        self.save_config()
+    }
+    
+    /// Sets the note naming pattern
+    /// 
+    /// # Parameters
+    /// * `pattern` - Pattern for naming new notes
+    /// 
+    /// # Returns
+    /// Result indicating success or failure
+    pub fn set_note_naming_pattern(&mut self, pattern: String) -> Result<()> {
+        // Validate pattern
+        if !pattern.contains("{title}") {
+            anyhow::bail!("Pattern must contain {{title}} placeholder");
+        }
+        
+        // Update config
+        self.config.note_naming_pattern = Some(pattern);
         self.save_config()
     }
     

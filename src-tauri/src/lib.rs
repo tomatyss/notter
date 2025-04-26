@@ -31,6 +31,23 @@ async fn get_config(state: State<'_, AppState>) -> Result<AppConfig, String> {
     Ok(config_manager.get_config())
 }
 
+/// Sets the note naming pattern
+/// 
+/// # Parameters
+/// * `pattern` - Pattern for naming new notes
+/// 
+/// # Returns
+/// The updated application configuration
+#[tauri::command]
+async fn set_note_naming_pattern(pattern: String, state: State<'_, AppState>) -> Result<AppConfig, String> {
+    let mut config_manager = state.config_manager.lock().map_err(|e| e.to_string())?;
+    
+    config_manager.set_note_naming_pattern(pattern)
+        .map_err(|e| e.to_string())?;
+    
+    Ok(config_manager.get_config())
+}
+
 /// Selects a folder for storing notes
 /// 
 /// # Parameters
@@ -169,6 +186,34 @@ async fn move_note(id: String, new_path: String, state: State<'_, AppState>) -> 
     };
     
     note_manager.move_note(&id, &new_path).map_err(|e| e.to_string())
+}
+
+/// Creates a new note
+/// 
+/// # Parameters
+/// * `title` - Title of the note
+/// * `content` - Initial content of the note
+/// * `file_type` - Type of note (Markdown or PlainText)
+/// * `pattern` - Optional naming pattern (e.g., "{number}-{title}")
+/// 
+/// # Returns
+/// The newly created note
+#[tauri::command]
+async fn create_note(
+    title: String,
+    content: String,
+    file_type: notes::NoteType,
+    pattern: Option<String>,
+    state: State<'_, AppState>
+) -> Result<Note, String> {
+    let note_manager_lock = state.note_manager.lock().map_err(|e| e.to_string())?;
+    
+    let Some(note_manager) = note_manager_lock.as_ref() else {
+        return Err("Note manager not initialized".into());
+    };
+    
+    let pattern_ref = pattern.as_deref();
+    note_manager.create_note(&title, &content, file_type, pattern_ref).map_err(|e| e.to_string())
 }
 
 /// Searches for notes matching the query
@@ -316,6 +361,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_config,
             select_folder,
+            set_note_naming_pattern,
             list_notes,
             get_note,
             update_note_content,
@@ -323,6 +369,7 @@ pub fn run() {
             move_note,
             search_notes,
             rebuild_search_index,
+            create_note,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

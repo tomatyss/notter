@@ -6,6 +6,12 @@ export interface AppConfig {
    * Path to the directory containing notes
    */
   notes_dir: string | null;
+  
+  /**
+   * Pattern for naming new notes
+   * Supports placeholders: {number}, {title}, {extension}
+   */
+  note_naming_pattern: string | null;
 }
 
 /**
