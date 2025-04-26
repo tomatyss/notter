@@ -40,16 +40,5 @@
     "shell": {
       "open": true
     }
-  },
-  "mobile": {
-    "ios": {
-      "developmentTeam": "2LP8WM2238",
-      "infoPlist": {
-        "NSDocumentsFolderUsageDescription": "This app needs access to your documents to read and save notes.",
-        "UIFileSharingEnabled": true,
-        "UISupportsDocumentBrowser": true,
-        "LSSupportsOpeningDocumentsInPlace": true
-      }
-    }
   }
 }

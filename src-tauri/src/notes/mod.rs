@@ -340,6 +340,63 @@ impl NoteManager {
         Ok(path)
     }
     
+    /// Updates the content of a note
+    /// 
+    /// # Parameters
+    /// * `id` - ID of the note to update
+    /// * `content` - New content for the note
+    /// 
+    /// # Returns
+    /// The updated note
+    pub fn update_note_content(&self, id: &str, content: &str) -> Result<Note> {
+        // Get the file path from the ID
+        let path = self.get_note_path(id)?;
+        
+        // Write the new content to the file
+        fs::write(&path, content)
+            .context("Failed to write note content")?;
+        
+        // Return the updated note
+        self.read_note(&path)
+    }
+    
+    /// Renames a note file
+    /// 
+    /// # Parameters
+    /// * `id` - ID of the note to rename
+    /// * `new_name` - New name for the note file (without extension)
+    /// 
+    /// # Returns
+    /// The updated note with new ID
+    pub fn rename_note(&self, id: &str, new_name: &str) -> Result<Note> {
+        // Get the current file path from the ID
+        let current_path = self.get_note_path(id)?;
+        
+        // Get the file extension
+        let extension = current_path.extension()
+            .and_then(|ext| ext.to_str())
+            .unwrap_or("txt");
+        
+        // Get the parent directory
+        let parent_dir = current_path.parent()
+            .unwrap_or_else(|| Path::new(""));
+        
+        // Create the new path with the new name and same extension
+        let new_path = parent_dir.join(format!("{}.{}", new_name, extension));
+        
+        // Check if the new path already exists
+        if new_path.exists() {
+            anyhow::bail!("A file with this name already exists");
+        }
+        
+        // Rename the file
+        fs::rename(&current_path, &new_path)
+            .context("Failed to rename note file")?;
+        
+        // Return the updated note
+        self.read_note(&new_path)
+    }
+    
     /// Converts a file path to a note ID
     /// 
     /// # Parameters

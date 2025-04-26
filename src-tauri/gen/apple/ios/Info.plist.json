@@ -1,0 +1,7 @@
+{
+  "developmentTeam": "2LP8WM2238",
+  "NSDocumentsFolderUsageDescription": "This app needs access to your documents to read and save notes.",
+  "UIFileSharingEnabled": true,
+  "UISupportsDocumentBrowser": true,
+  "LSSupportsOpeningDocumentsInPlace": true
+}

@@ -1,0 +1,8 @@
+{
+  "$schema": "./gen/schemas/mobile-schema.json",
+  "app": {
+    "ios": {
+      "developmentTeam": "2LP8WM2238"
+    }
+  }
+}

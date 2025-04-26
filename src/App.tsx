@@ -105,6 +105,58 @@ function App() {
       setNoteLoading(false);
     }
   };
+  
+  // Handle note content update
+  const handleNoteContentUpdate = async (id: string, content: string) => {
+    try {
+      setNoteLoading(true);
+      // Update note content
+      const updatedNote = await invoke<Note>('update_note_content', { id, content });
+      
+      // Update the selected note
+      setSelectedNote(updatedNote);
+      
+      // Update the note in the notes list
+      setNotes(prevNotes => 
+        prevNotes.map(note => 
+          note.id === id 
+            ? { 
+                ...note, 
+                modified: updatedNote.modified,
+                tags: updatedNote.tags // Tags might have changed if they were added/removed in the content
+              } 
+            : note
+        )
+      );
+      
+      setNoteLoading(false);
+    } catch (err) {
+      setError(`Failed to update note: ${err}`);
+      setNoteLoading(false);
+    }
+  };
+  
+  // Handle note rename
+  const handleNoteRename = async (id: string, newName: string) => {
+    try {
+      setNoteLoading(true);
+      // Rename the note
+      const updatedNote = await invoke<Note>('rename_note', { id, newName });
+      
+      // Update the selected note
+      setSelectedNote(updatedNote);
+      setSelectedNoteId(updatedNote.id); // ID might have changed due to path change
+      
+      // Update the note in the notes list or reload notes if needed
+      // Since the ID might have changed, it's safer to reload the notes
+      loadNotes();
+      
+      setNoteLoading(false);
+    } catch (err) {
+      setError(`Failed to rename note: ${err}`);
+      setNoteLoading(false);
+    }
+  };
 
   // Clear error message
   const clearError = () => setError(null);
@@ -165,7 +217,9 @@ function App() {
           <div className="main-content">
             <NoteViewer 
               note={selectedNote} 
-              loading={noteLoading} 
+              loading={noteLoading}
+              onNoteContentUpdate={handleNoteContentUpdate}
+              onNoteRename={handleNoteRename}
             />
           </div>
         </main>

@@ -114,6 +114,44 @@ async fn get_note(id: String, state: State<'_, AppState>) -> Result<Note, String
     note_manager.get_note(&id).map_err(|e| e.to_string())
 }
 
+/// Updates the content of a note
+/// 
+/// # Parameters
+/// * `id` - ID of the note to update
+/// * `content` - New content for the note
+/// 
+/// # Returns
+/// The updated note
+#[tauri::command]
+async fn update_note_content(id: String, content: String, state: State<'_, AppState>) -> Result<Note, String> {
+    let note_manager_lock = state.note_manager.lock().map_err(|e| e.to_string())?;
+    
+    let Some(note_manager) = note_manager_lock.as_ref() else {
+        return Err("Note manager not initialized".into());
+    };
+    
+    note_manager.update_note_content(&id, &content).map_err(|e| e.to_string())
+}
+
+/// Renames a note file
+/// 
+/// # Parameters
+/// * `id` - ID of the note to rename
+/// * `new_name` - New name for the note file (without extension)
+/// 
+/// # Returns
+/// The updated note with new ID
+#[tauri::command]
+async fn rename_note(id: String, new_name: String, state: State<'_, AppState>) -> Result<Note, String> {
+    let note_manager_lock = state.note_manager.lock().map_err(|e| e.to_string())?;
+    
+    let Some(note_manager) = note_manager_lock.as_ref() else {
+        return Err("Note manager not initialized".into());
+    };
+    
+    note_manager.rename_note(&id, &new_name).map_err(|e| e.to_string())
+}
+
 /// Searches for notes matching the query
 /// 
 /// # Parameters
@@ -261,6 +299,8 @@ pub fn run() {
             select_folder,
             list_notes,
             get_note,
+            update_note_content,
+            rename_note,
             search_notes,
             rebuild_search_index,
         ])
