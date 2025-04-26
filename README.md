@@ -14,7 +14,7 @@ Notter is a cross-platform desktop application for working with text files as a 
 - **Markdown Support**: Full support for Markdown formatting
 - **Plain Text Support**: Work with simple text files
 - **Local-First Storage**: Your notes are stored as regular files on your system
-- **Cross-Platform**: Works on Windows, macOS, and Linux
+- **Cross-Platform**: Works on Windows, macOS, Linux, and iOS
 
 ## Installation
 
@@ -43,6 +43,12 @@ Download the latest version for your platform from the [Releases](https://github
 1. Download the `.AppImage` file
 2. Make it executable: `chmod +x Notter.AppImage`
 3. Run the AppImage: `./Notter.AppImage`
+
+#### iOS
+
+1. Download the app from the App Store
+2. Launch Notter from your home screen
+3. Grant necessary permissions when prompted
 
 ## Usage
 
@@ -125,6 +131,29 @@ npm run tauri build
 ```
 
 This will create platform-specific packages in the `src-tauri/target/release` directory.
+
+### iOS Development
+
+To build and run the application on iOS:
+
+1. Ensure you have a Mac with Xcode installed
+2. Make sure you have an Apple Developer account
+3. Update your development team ID in `src-tauri/tauri.conf.json`
+4. Use the provided build script:
+
+```bash
+./ios-build.sh
+```
+
+Or run the commands manually:
+
+```bash
+# For development and testing in simulator
+npm run ios:dev
+
+# For production build
+npm run ios:build
+```
 
 ## Technologies
 

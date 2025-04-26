@@ -11,6 +11,9 @@ use config::{AppConfig, ConfigManager};
 use notes::{Note, NoteManager, NoteSummary};
 use search::{SearchService, SearchResult};
 
+#[cfg(target_os = "ios")]
+use std::sync::Arc;
+
 /// Application state shared between commands
 struct AppState {
     config_manager: Mutex<ConfigManager>,
@@ -180,6 +183,38 @@ async fn rebuild_search_index(app_handle: tauri::AppHandle, state: State<'_, App
     Ok(())
 }
 
+/// iOS-specific initialization
+#[cfg(target_os = "ios")]
+fn ios_init(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    println!("Initializing iOS-specific functionality");
+    
+    // Get the app's documents directory on iOS
+    let documents_dir = tauri::api::path::document_dir()
+        .ok_or("Failed to get documents directory")?;
+    
+    println!("iOS documents directory: {:?}", documents_dir);
+    
+    // Update the config to use the documents directory
+    let state: State<AppState> = app.state();
+    let mut config_manager = state.config_manager.lock().map_err(|e| e.to_string())?;
+    
+    // Set the notes directory to a subdirectory in the documents folder
+    let notes_dir = documents_dir.join("Notes");
+    
+    // Create the directory if it doesn't exist
+    if !notes_dir.exists() {
+        std::fs::create_dir_all(&notes_dir)?;
+    }
+    
+    config_manager.set_notes_dir(notes_dir.clone())?;
+    
+    // Initialize note manager with the iOS documents directory
+    let note_manager = NoteManager::new(notes_dir);
+    *state.note_manager.lock().map_err(|e| e.to_string())? = Some(note_manager);
+    
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -210,6 +245,14 @@ pub fn run() {
                 note_manager: Mutex::new(note_manager),
                 search_service: Mutex::new(search_service),
             });
+            
+            // Initialize iOS-specific functionality
+            #[cfg(target_os = "ios")]
+            {
+                if let Err(e) = ios_init(app) {
+                    eprintln!("Error initializing iOS: {}", e);
+                }
+            }
             
             Ok(())
         })

@@ -6,6 +6,8 @@ use anyhow::{Context, Result};
 use walkdir::WalkDir;
 use base64::Engine;
 use natord::compare;
+#[cfg(target_os = "ios")]
+use std::sync::Arc;
 
 /// Options for sorting notes
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -74,6 +76,9 @@ pub struct NoteSummary {
 pub struct NoteManager {
     /// Base directory for notes
     notes_dir: PathBuf,
+    /// Flag indicating if running on iOS
+    #[cfg(target_os = "ios")]
+    is_ios: bool,
 }
 
 impl NoteManager {
@@ -85,7 +90,18 @@ impl NoteManager {
     /// # Returns
     /// A new NoteManager instance
     pub fn new(notes_dir: PathBuf) -> Self {
-        Self { notes_dir }
+        #[cfg(target_os = "ios")]
+        {
+            Self { 
+                notes_dir,
+                is_ios: true,
+            }
+        }
+        
+        #[cfg(not(target_os = "ios"))]
+        {
+            Self { notes_dir }
+        }
     }
     
     /// Lists all notes in the directory
@@ -97,6 +113,15 @@ impl NoteManager {
     /// A list of note summaries
     pub fn list_notes(&self, sort: Option<SortOption>) -> Result<Vec<NoteSummary>> {
         let mut notes = Vec::new();
+        
+        #[cfg(target_os = "ios")]
+        {
+            // On iOS, we need to be more careful with file system access
+            // and handle the case where the directory might not be accessible yet
+            if !self.notes_dir.exists() {
+                return Ok(Vec::new());
+            }
+        }
         
         for entry in WalkDir::new(&self.notes_dir)
             .follow_links(true)

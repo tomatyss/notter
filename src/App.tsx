@@ -4,6 +4,7 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { NoteList } from "./components/NoteList";
 import { NoteViewer } from "./components/NoteViewer";
 import { SearchPanel } from "./components/SearchPanel";
+import MobileLayout from "./components/MobileLayout";
 import { AppConfig, Note, NoteSummary, SortOption } from "./types";
 import "./App.css";
 
@@ -109,72 +110,74 @@ function App() {
   const clearError = () => setError(null);
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>Notter</h1>
-      </header>
-      
-      <main className="app-content">
-        <div className="sidebar">
-          <div className="tab-navigation">
-            <button 
-              className={`tab-button ${activeTab === 'notes' ? 'active' : ''}`}
-              onClick={() => setActiveTab('notes')}
-            >
-              Notes
-            </button>
-            <button 
-              className={`tab-button ${activeTab === 'settings' ? 'active' : ''}`}
-              onClick={() => setActiveTab('settings')}
-            >
-              Settings
-            </button>
+    <MobileLayout>
+      <div className="app">
+        <header className="app-header">
+          <h1>Notter</h1>
+        </header>
+        
+        <main className="app-content">
+          <div className="sidebar">
+            <div className="tab-navigation">
+              <button 
+                className={`tab-button ${activeTab === 'notes' ? 'active' : ''}`}
+                onClick={() => setActiveTab('notes')}
+              >
+                Notes
+              </button>
+              <button 
+                className={`tab-button ${activeTab === 'settings' ? 'active' : ''}`}
+                onClick={() => setActiveTab('settings')}
+              >
+                Settings
+              </button>
+            </div>
+            
+            {activeTab === 'notes' ? (
+              <>
+                <SearchPanel
+                  onSelectNote={handleSelectNote}
+                  loading={configLoading || notesLoading}
+                  showNoteList={(query) => {
+                    // Only show note list when no search query is active
+                    return !query || query.trim() === '';
+                  }}
+                >
+                  <NoteList 
+                    notes={notes} 
+                    onSelectNote={handleSelectNote}
+                    selectedNoteId={selectedNoteId}
+                    loading={notesLoading}
+                    currentSort={sortOption}
+                    onSortChange={handleSortChange}
+                  />
+                </SearchPanel>
+              </>
+            ) : (
+              <SettingsPanel 
+                config={config} 
+                onConfigUpdate={handleConfigUpdate} 
+                loading={configLoading} 
+              />
+            )}
           </div>
           
-          {activeTab === 'notes' ? (
-            <>
-              <SearchPanel
-                onSelectNote={handleSelectNote}
-                loading={configLoading || notesLoading}
-                showNoteList={(query) => {
-                  // Only show note list when no search query is active
-                  return !query || query.trim() === '';
-                }}
-              >
-                <NoteList 
-                  notes={notes} 
-                  onSelectNote={handleSelectNote}
-                  selectedNoteId={selectedNoteId}
-                  loading={notesLoading}
-                  currentSort={sortOption}
-                  onSortChange={handleSortChange}
-                />
-              </SearchPanel>
-            </>
-          ) : (
-            <SettingsPanel 
-              config={config} 
-              onConfigUpdate={handleConfigUpdate} 
-              loading={configLoading} 
+          <div className="main-content">
+            <NoteViewer 
+              note={selectedNote} 
+              loading={noteLoading} 
             />
-          )}
-        </div>
+          </div>
+        </main>
         
-        <div className="main-content">
-          <NoteViewer 
-            note={selectedNote} 
-            loading={noteLoading} 
-          />
-        </div>
-      </main>
-      
-      {error && (
-        <div className="error-banner">
-          <p>{error}</p>
-          <button onClick={clearError}>Dismiss</button>
-        </div>
-      )}
-    </div>
+        {error && (
+          <div className="error-banner">
+            <p>{error}</p>
+            <button onClick={clearError}>Dismiss</button>
+          </div>
+        )}
+      </div>
+    </MobileLayout>
   );
 }
 
