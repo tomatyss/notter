@@ -174,10 +174,6 @@ function App() {
   return (
     <MobileLayout>
       <div className="app">
-        <header className="app-header">
-          <h1>Notter</h1>
-        </header>
-        
         <main className="app-content">
           <div className="sidebar">
             <div className="tab-navigation">
