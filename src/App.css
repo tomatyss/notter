@@ -592,19 +592,14 @@ body {
   font-size: 1.8rem;
 }
 
-.edit-title-button {
-  padding: 0.4rem 0.8rem;
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  transition: background-color 0.2s;
+.editable {
+  cursor: text;
+  position: relative;
 }
 
-.edit-title-button:hover {
-  background-color: var(--hover-color);
+.editable:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 4px;
 }
 
 .note-title-edit {
@@ -613,6 +608,17 @@ body {
   gap: 0.5rem;
   margin-bottom: 1rem;
   width: 100%;
+  position: relative;
+}
+
+.note-title-edit::after {
+  content: "Press Enter to save, Esc to cancel";
+  position: absolute;
+  bottom: -20px;
+  right: 0;
+  font-size: 0.75rem;
+  color: #666;
+  font-style: italic;
 }
 
 .title-input {
@@ -644,51 +650,26 @@ body {
   color: #666;
 }
 
-.note-actions {
+.autosave-indicator {
+  font-size: 0.8rem;
+  color: var(--primary-color);
+  margin-left: 0.5rem;
+  font-style: italic;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+
+.editor-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.edit-button, .save-button, .cancel-button {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-.edit-button {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.edit-button:hover {
-  background-color: var(--hover-color);
-}
-
-.save-button {
-  background-color: var(--success-color);
-  color: white;
-}
-
-.save-button:hover {
-  background-color: #27ae60;
-}
-
-.save-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.cancel-button {
-  background-color: #e74c3c;
-  color: white;
-}
-
-.cancel-button:hover {
-  background-color: #c0392b;
+  flex-direction: column;
 }
 
 .error-message {
@@ -719,7 +700,27 @@ body {
   font-family: monospace;
   font-size: 1rem;
   line-height: 1.5;
-  resize: vertical;
+  resize: none;
+  flex: 1;
+  min-height: 300px;
+  height: 100%;
+  position: relative;
+  overflow-y: auto;
+}
+
+.editor-container::after {
+  content: "Press Ctrl+Enter to save, Esc to cancel";
+  position: absolute;
+  bottom: -20px;
+  right: 0;
+  font-size: 0.75rem;
+  color: #666;
+  font-style: italic;
+}
+
+.markdown-content, .plain-text-content {
+  padding: 0.5rem;
+  transition: background-color 0.2s;
 }
 
 .note-content {
@@ -823,6 +824,11 @@ body {
     color: #f0f0f0;
   }
   
+  .editor-container::after,
+  .note-title-edit::after {
+    color: #999;
+  }
+  
   .title-input {
     background-color: #2a2a2a;
     color: #f0f0f0;
@@ -833,6 +839,14 @@ body {
     background-color: #2a2a2a;
     color: #f0f0f0;
     border-color: #444;
+  }
+  
+  .editable:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  .autosave-indicator {
+    color: var(--primary-color);
   }
   
   .search-input {

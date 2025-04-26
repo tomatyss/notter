@@ -109,27 +109,32 @@ function App() {
   // Handle note content update
   const handleNoteContentUpdate = async (id: string, content: string) => {
     try {
-      setNoteLoading(true);
+      // Don't set loading state to avoid UI flicker during editing
+      // setNoteLoading(true);
+      
       // Update note content
       const updatedNote = await invoke<Note>('update_note_content', { id, content });
       
       // Update the selected note
       setSelectedNote(updatedNote);
       
-      // Update the note in the notes list
-      setNotes(prevNotes => 
-        prevNotes.map(note => 
-          note.id === id 
-            ? { 
-                ...note, 
-                modified: updatedNote.modified,
-                tags: updatedNote.tags // Tags might have changed if they were added/removed in the content
-              } 
-            : note
-        )
-      );
+      // Update the note in the notes list in the background
+      setTimeout(() => {
+        setNotes(prevNotes => 
+          prevNotes.map(note => 
+            note.id === id 
+              ? { 
+                  ...note, 
+                  modified: updatedNote.modified,
+                  tags: updatedNote.tags // Tags might have changed if they were added/removed in the content
+                } 
+              : note
+          )
+        );
+      }, 100);
       
-      setNoteLoading(false);
+      // Don't set loading state to false here to avoid UI flicker
+      // setNoteLoading(false);
     } catch (err) {
       setError(`Failed to update note: ${err}`);
       setNoteLoading(false);
@@ -139,7 +144,9 @@ function App() {
   // Handle note rename
   const handleNoteRename = async (id: string, newName: string) => {
     try {
-      setNoteLoading(true);
+      // Don't set loading state to avoid UI flicker during rename
+      // setNoteLoading(true);
+      
       // Rename the note
       const updatedNote = await invoke<Note>('rename_note', { id, newName });
       
@@ -147,11 +154,14 @@ function App() {
       setSelectedNote(updatedNote);
       setSelectedNoteId(updatedNote.id); // ID might have changed due to path change
       
-      // Update the note in the notes list or reload notes if needed
-      // Since the ID might have changed, it's safer to reload the notes
-      loadNotes();
+      // Update the note in the notes list
+      // We'll do this in the background to avoid UI refresh during editing
+      setTimeout(() => {
+        loadNotes();
+      }, 100);
       
-      setNoteLoading(false);
+      // Don't set loading state to false here to avoid UI flicker
+      // setNoteLoading(false);
     } catch (err) {
       setError(`Failed to rename note: ${err}`);
       setNoteLoading(false);

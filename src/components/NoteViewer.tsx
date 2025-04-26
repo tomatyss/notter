@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
 import { invoke } from '@tauri-apps/api/core';
@@ -52,6 +52,12 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   // State for error message
   const [error, setError] = useState<string | null>(null);
+  // Refs for autosave timers
+  const contentAutosaveTimerRef = useRef<number | null>(null);
+  const titleAutosaveTimerRef = useRef<number | null>(null);
+  // Refs for content and title elements
+  const contentRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
   
   // Reset states when note changes
   useEffect(() => {
@@ -62,20 +68,66 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
     setIsEditing(false);
     setIsRenamingTitle(false);
     setError(null);
+    
+    // Clear any pending autosave timers
+    if (contentAutosaveTimerRef.current) {
+      clearTimeout(contentAutosaveTimerRef.current);
+    }
+    if (titleAutosaveTimerRef.current) {
+      clearTimeout(titleAutosaveTimerRef.current);
+    }
   }, [note]);
   
-  // Handle content changes
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (contentAutosaveTimerRef.current) {
+        clearTimeout(contentAutosaveTimerRef.current);
+      }
+      if (titleAutosaveTimerRef.current) {
+        clearTimeout(titleAutosaveTimerRef.current);
+      }
+    };
+  }, []);
+  
+  // Handle content changes - only save on blur, not during typing
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setEditedContent(e.target.value);
+    const newContent = e.target.value;
+    setEditedContent(newContent);
+    
+    // Clear any existing timer to prevent autosave during content editing
+    if (contentAutosaveTimerRef.current) {
+      clearTimeout(contentAutosaveTimerRef.current);
+    }
   };
   
-  // Handle title changes
+  // Handle title changes - only save on blur, not during typing
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditedTitle(e.target.value);
+    const newTitle = e.target.value;
+    setEditedTitle(newTitle);
+    
+    // Clear any existing timer to prevent autosave during title editing
+    if (titleAutosaveTimerRef.current) {
+      clearTimeout(titleAutosaveTimerRef.current);
+    }
+  };
+  
+  // Handle double click on content to edit
+  const handleContentDoubleClick = () => {
+    if (!isEditing && !loading && note) {
+      setIsEditing(true);
+    }
+  };
+  
+  // Handle double click on title to rename
+  const handleTitleDoubleClick = () => {
+    if (!isRenamingTitle && !loading && note) {
+      setIsRenamingTitle(true);
+    }
   };
   
   // Save edited content
-  const saveContent = async () => {
+  const saveContent = async (content = editedContent) => {
     if (!note) return;
     
     try {
@@ -84,17 +136,15 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       
       if (onNoteContentUpdate) {
         // Use the callback to update the note content
-        onNoteContentUpdate(note.id, editedContent);
+        await onNoteContentUpdate(note.id, content);
       } else {
         // Fallback to direct API call if no callback provided
         await invoke<Note>('update_note_content', {
           id: note.id,
-          content: editedContent
+          content: content
         });
       }
       
-      // Exit edit mode
-      setIsEditing(false);
       setIsSaving(false);
     } catch (err) {
       setError(`Failed to save note: ${err}`);
@@ -103,7 +153,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   };
   
   // Save renamed title
-  const saveTitle = async () => {
+  const saveTitle = async (title = editedTitle) => {
     if (!note) return;
     
     try {
@@ -112,21 +162,65 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       
       if (onNoteRename) {
         // Use the callback to rename the note
-        onNoteRename(note.id, editedTitle);
+        await onNoteRename(note.id, title);
       } else {
         // Fallback to direct API call if no callback provided
         await invoke<Note>('rename_note', {
           id: note.id,
-          newName: editedTitle
+          newName: title
         });
       }
       
-      // Exit rename mode
-      setIsRenamingTitle(false);
       setIsSaving(false);
     } catch (err) {
       setError(`Failed to rename note: ${err}`);
       setIsSaving(false);
+    }
+  };
+  
+  // Handle blur events to exit edit mode and save
+  const handleContentBlur = () => {
+    // Save the content when the textarea loses focus
+    saveContent();
+    // Exit edit mode after saving
+    setIsEditing(false);
+  };
+  
+  // Handle key press in content textarea
+  const handleContentKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Check for Ctrl+Enter or Cmd+Enter to save and exit
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      saveContent();
+      setIsEditing(false);
+    }
+    // Cancel on Escape key
+    else if (e.key === 'Escape') {
+      e.preventDefault();
+      setEditedContent(note?.content || '');
+      setIsEditing(false);
+    }
+  };
+  
+  // Handle blur events to exit rename mode and save
+  const handleTitleBlur = () => {
+    // Save the title when the input loses focus
+    saveTitle();
+    // Exit rename mode after saving
+    setIsRenamingTitle(false);
+  };
+  
+  // Handle key press in title input
+  const handleTitleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Save and exit on Enter key
+    if (e.key === 'Enter') {
+      saveTitle();
+      setIsRenamingTitle(false);
+    }
+    // Cancel on Escape key
+    else if (e.key === 'Escape') {
+      setEditedTitle(note?.title || '');
+      setIsRenamingTitle(false);
     }
   };
   if (loading) {
@@ -156,38 +250,23 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
               type="text"
               value={editedTitle}
               onChange={handleTitleChange}
+              onBlur={handleTitleBlur}
+              onKeyDown={handleTitleKeyPress}
               className="title-input"
               autoFocus
             />
-            <div className="title-actions">
-              <button 
-                onClick={saveTitle}
-                disabled={isSaving}
-                className="save-button"
-              >
-                {isSaving ? 'Saving...' : 'Save'}
-              </button>
-              <button 
-                onClick={() => {
-                  setIsRenamingTitle(false);
-                  setEditedTitle(note.title);
-                }}
-                className="cancel-button"
-              >
-                Cancel
-              </button>
-            </div>
+            {isSaving && <span className="autosave-indicator">Saving...</span>}
           </div>
         ) : (
           <div className="note-title-container">
-            <h1 className="note-title">{note.title}</h1>
-            <button 
-              onClick={() => setIsRenamingTitle(true)}
-              className="edit-title-button"
-              title="Rename note"
+            <h1 
+              className="note-title editable" 
+              onDoubleClick={handleTitleDoubleClick}
+              ref={titleRef}
+              title="Double-click to edit"
             >
-              Rename
-            </button>
+              {note.title}
+            </h1>
           </div>
         )}
         
@@ -212,36 +291,6 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
         </div>
       </div>
       
-      <div className="note-actions">
-        {isEditing ? (
-          <>
-            <button 
-              onClick={saveContent}
-              disabled={isSaving}
-              className="save-button"
-            >
-              {isSaving ? 'Saving...' : 'Save'}
-            </button>
-            <button 
-              onClick={() => {
-                setIsEditing(false);
-                setEditedContent(note.content);
-              }}
-              className="cancel-button"
-            >
-              Cancel
-            </button>
-          </>
-        ) : (
-          <button 
-            onClick={() => setIsEditing(true)}
-            className="edit-button"
-          >
-            Edit
-          </button>
-        )}
-      </div>
-      
       {error && (
         <div className="error-message">
           {error}
@@ -251,18 +300,31 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
         </div>
       )}
       
-      <div className="note-content">
+      <div 
+        className="note-content" 
+        onDoubleClick={handleContentDoubleClick}
+        ref={contentRef}
+        title="Double-click to edit"
+        style={{ display: 'flex', flexDirection: 'column', flex: 1 }}
+      >
         {isEditing ? (
-          <textarea
-            value={editedContent}
-            onChange={handleContentChange}
-            className="content-editor"
-            rows={20}
-          />
+          <div className="editor-container">
+            <textarea
+              value={editedContent}
+              onChange={handleContentChange}
+              onBlur={handleContentBlur}
+              onKeyDown={handleContentKeyDown}
+              className="content-editor"
+              autoFocus
+            />
+            {isSaving && <span className="autosave-indicator">Saving...</span>}
+          </div>
         ) : note.file_type === NoteType.Markdown ? (
-          <ReactMarkdown>{note.content}</ReactMarkdown>
+          <div className="markdown-content editable">
+            <ReactMarkdown>{note.content}</ReactMarkdown>
+          </div>
         ) : (
-          <pre className="plain-text-content">{note.content}</pre>
+          <pre className="plain-text-content editable">{note.content}</pre>
         )}
       </div>
     </div>
