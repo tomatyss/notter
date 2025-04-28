@@ -96,4 +96,4 @@ If you encounter any issues with the iOS version of Notter:
 
 - Check the [FAQ section](https://github.com/yourusername/notter/wiki/FAQ) on our website
 - Report bugs through the [GitHub Issues page](https://github.com/yourusername/notter/issues)
-- Contact support at support@notter-app.com
+- Contact support at support@notter.com

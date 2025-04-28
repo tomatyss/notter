@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "notter-app",
+  "productName": "notter",
   "version": "0.1.0",
-  "identifier": "com.notter-app.app",
+  "identifier": "com.notter.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
