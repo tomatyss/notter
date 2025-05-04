@@ -4,6 +4,7 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { NoteList } from "./components/NoteList";
 import { NoteViewer } from "./components/NoteViewer";
 import { SearchPanel } from "./components/SearchPanel";
+import { TagFilter } from "./components/TagFilter";
 import MobileLayout from "./components/MobileLayout";
 import { AppConfig, Note, NoteSummary, SortOption } from "./types";
 import "./App.css";
@@ -23,6 +24,13 @@ function App() {
   const [selectedNoteId, setSelectedNoteId] = useState<string | undefined>(undefined);
   const [sortOption, setSortOption] = useState<SortOption>(SortOption.ModifiedNewest);
   
+  // Tag filtering state
+  const [allTags, setAllTags] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [matchAllTags, setMatchAllTags] = useState<boolean>(false);
+  const [filteredNotes, setFilteredNotes] = useState<NoteSummary[]>([]);
+  const [isFiltering, setIsFiltering] = useState<boolean>(false);
+  
   // Loading states
   const [configLoading, setConfigLoading] = useState(true);
   const [notesLoading, setNotesLoading] = useState(false);
@@ -31,12 +39,22 @@ function App() {
   // Error state
   const [error, setError] = useState<string | null>(null);
 
+  // Collect all unique tags from notes
+  const collectAllTags = useCallback((notesList: NoteSummary[]) => {
+    const tagSet = new Set<string>();
+    notesList.forEach(note => {
+      note.tags.forEach(tag => tagSet.add(tag));
+    });
+    return Array.from(tagSet).sort();
+  }, []);
+
   // Load notes from configured directory
   const loadNotes = useCallback(async () => {
     try {
       setNotesLoading(true);
       const notes = await invoke<NoteSummary[]>('list_notes', { sort: sortOption });
       setNotes(notes);
+      setAllTags(collectAllTags(notes));
       setNotesLoading(false);
       setConfigLoading(false); // Ensure configLoading is set to false after notes are loaded
     } catch (err) {
@@ -44,7 +62,7 @@ function App() {
       setNotesLoading(false);
       setConfigLoading(false); // Ensure configLoading is set to false even if there's an error
     }
-  }, [sortOption]);
+  }, [sortOption, collectAllTags]);
 
   // Load initial configuration
   useEffect(() => {
@@ -76,10 +94,63 @@ function App() {
     }
   }, [config?.notes_dir, loadNotes]);
 
+  // Filter notes by tags
+  const filterNotesByTags = useCallback(async () => {
+    if (selectedTags.length === 0) {
+      setIsFiltering(false);
+      setFilteredNotes([]);
+      return;
+    }
+    
+    try {
+      setIsFiltering(true);
+      const filtered = await invoke<NoteSummary[]>('filter_notes_by_tags', {
+        tags: selectedTags,
+        matchAll: matchAllTags,
+        sort: sortOption
+      });
+      setFilteredNotes(filtered);
+      setIsFiltering(false);
+    } catch (err) {
+      setError(`Failed to filter notes: ${err}`);
+      setIsFiltering(false);
+    }
+  }, [selectedTags, matchAllTags, sortOption]);
+
+  // Trigger filtering when selected tags or match option changes
+  useEffect(() => {
+    if (selectedTags.length > 0) {
+      filterNotesByTags();
+    } else {
+      setIsFiltering(false);
+      setFilteredNotes([]);
+    }
+  }, [selectedTags, matchAllTags, filterNotesByTags]);
+
   // Handle sort option change
   const handleSortChange = (sort: SortOption) => {
     setSortOption(sort);
     // loadNotes will be called by the useEffect when sortOption changes
+    // If filtering is active, we need to reapply the filter with the new sort option
+    if (selectedTags.length > 0) {
+      filterNotesByTags();
+    }
+  };
+
+  // Handle tag selection
+  const handleTagSelect = (tag: string) => {
+    if (selectedTags.includes(tag)) {
+      setSelectedTags(selectedTags.filter(t => t !== tag));
+    } else {
+      setSelectedTags([...selectedTags, tag]);
+    }
+  };
+
+  // Handle tag click from note view
+  const handleTagClick = (tag: string) => {
+    setSelectedTags([tag]);
+    setMatchAllTags(false);
+    setActiveTab('notes');
   };
 
   // Handle configuration update
@@ -243,6 +314,13 @@ function App() {
             
             {activeTab === 'notes' ? (
               <>
+                <TagFilter
+                  allTags={allTags}
+                  selectedTags={selectedTags}
+                  onTagsChange={setSelectedTags}
+                  matchAll={matchAllTags}
+                  onMatchAllChange={setMatchAllTags}
+                />
                 <SearchPanel
                   onSelectNote={handleSelectNote}
                   loading={configLoading || notesLoading}
@@ -259,6 +337,10 @@ function App() {
                     loading={notesLoading}
                     currentSort={sortOption}
                     onSortChange={handleSortChange}
+                    filteredNotes={filteredNotes}
+                    isFiltering={isFiltering}
+                    selectedTags={selectedTags}
+                    onTagSelect={handleTagSelect}
                   />
                 </SearchPanel>
               </>
@@ -278,6 +360,7 @@ function App() {
               onNoteContentUpdate={handleNoteContentUpdate}
               onNoteRename={handleNoteRename}
               onNotePathChange={handleNoteMoveToPath}
+              onTagClick={handleTagClick}
             />
           </div>
         </main>

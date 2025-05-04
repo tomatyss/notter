@@ -32,6 +32,11 @@ interface NoteViewerProps {
    * Callback when note path is changed
    */
   onNotePathChange?: (id: string, newPath: string) => void;
+  
+  /**
+   * Callback when a tag is clicked
+   */
+  onTagClick?: (tag: string) => void;
 }
 
 /**
@@ -45,7 +50,8 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   loading, 
   onNoteContentUpdate,
   onNoteRename,
-  onNotePathChange
+  onNotePathChange,
+  onTagClick
 }) => {
   // State for edit mode
   const [isEditing, setIsEditing] = useState(false);
@@ -391,7 +397,12 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
           {note.tags.length > 0 && (
             <div className="note-tags">
               {note.tags.map(tag => (
-                <span key={tag} className="note-tag">
+                <span 
+                  key={tag} 
+                  className="note-tag clickable"
+                  onClick={() => onTagClick && onTagClick(tag)}
+                  title="Click to filter by this tag"
+                >
                   {tag}
                 </span>
               ))}

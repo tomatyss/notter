@@ -426,6 +426,145 @@ body {
   }
 }
 
+/* Tag Filter */
+.tag-filter {
+  padding: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tag-filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.tag-filter h3 {
+  margin: 0;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.expand-icon {
+  display: inline-block;
+  margin-right: 5px;
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+
+.expand-icon.expanded {
+  transform: rotate(0deg);
+}
+
+.clear-filters-button {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+.clear-filters-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.match-option {
+  margin: 5px 0;
+  font-size: 12px;
+}
+
+.match-option label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.all-tags-container {
+  max-height: 150px;
+  overflow-y: auto;
+  margin-top: 5px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 5px;
+}
+
+.all-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.filter-tag {
+  background-color: #f0f0f0;
+  border-radius: 12px;
+  padding: 2px 6px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.filter-tag.selected {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.selected-tags {
+  margin: 5px 0;
+}
+
+.active-filters {
+  font-size: 12px;
+  color: #666;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.active-filter-tag {
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 12px;
+  padding: 2px 6px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.active-filter-tag:hover {
+  background-color: var(--hover-color);
+}
+
+@media (prefers-color-scheme: dark) {
+  .filter-tag {
+    background-color: #333;
+    color: #f0f0f0;
+  }
+  
+  .filter-tag.selected {
+    background-color: var(--primary-color);
+    color: white;
+  }
+  
+  .clear-filters-button {
+    color: #999;
+  }
+  
+  .clear-filters-button:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  .active-filters {
+    color: #999;
+  }
+  
+  .all-tags-container {
+    border-top: 1px solid #444;
+  }
+}
+
 /* Note List */
 .note-list {
   flex: 1;
@@ -547,6 +686,26 @@ body {
   border-radius: 12px;
   margin: 0.1rem;
   display: inline-block;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.note-tag:hover {
+  background-color: var(--hover-color);
+}
+
+.note-tag.selected {
+  background-color: var(--hover-color);
+  color: white;
+}
+
+.note-tag.clickable {
+  cursor: pointer;
+}
+
+.note-tag.clickable:hover {
+  background-color: var(--hover-color);
+  color: white;
 }
 
 .loading-indicator {

@@ -236,6 +236,47 @@ async fn search_notes(
     search_service.search(&query, limit).map_err(|e| e.to_string())
 }
 
+/// Searches for notes with specific tags
+/// 
+/// # Parameters
+/// * `tags` - List of tags to filter by
+/// * `match_all` - If true, notes must have all tags; if false, notes can have any of the tags
+/// * `sort` - Optional sort option to determine the order of notes
+/// 
+/// # Returns
+/// A list of note summaries
+#[tauri::command]
+async fn filter_notes_by_tags(
+    tags: Vec<String>,
+    match_all: bool,
+    sort: Option<notes::SortOption>,
+    state: State<'_, AppState>
+) -> Result<Vec<NoteSummary>, String> {
+    let note_manager_lock = state.note_manager.lock().map_err(|e| e.to_string())?;
+    
+    let Some(note_manager) = note_manager_lock.as_ref() else {
+        return Err("Note manager not initialized".into());
+    };
+    
+    // Get all notes
+    let all_notes = note_manager.list_notes(sort).map_err(|e| e.to_string())?;
+    
+    // Filter notes by tags
+    let filtered_notes = if match_all {
+        // Notes must have all specified tags
+        all_notes.into_iter()
+            .filter(|note| tags.iter().all(|tag| note.tags.contains(tag)))
+            .collect()
+    } else {
+        // Notes can have any of the specified tags
+        all_notes.into_iter()
+            .filter(|note| tags.iter().any(|tag| note.tags.contains(tag)))
+            .collect()
+    };
+    
+    Ok(filtered_notes)
+}
+
 /// Rebuilds the search index with all notes
 /// 
 /// # Returns
@@ -370,6 +411,7 @@ pub fn run() {
             search_notes,
             rebuild_search_index,
             create_note,
+            filter_notes_by_tags,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
