@@ -112,7 +112,7 @@ export const NoteList: React.FC<NoteListProps> = ({
         </div>
       )}
       
-      {loading || isFiltering ? (
+      {loading ? (
         <div className="loading-indicator">Loading notes...</div>
       ) : displayNotes.length === 0 ? (
         <div className="empty-state">

@@ -103,17 +103,23 @@ function App() {
     }
     
     try {
+      // Set isFiltering to true to indicate that tag filtering is active
       setIsFiltering(true);
+      
+      // Show loading state while filtering
+      setNotesLoading(true);
+      
       const filtered = await invoke<NoteSummary[]>('filter_notes_by_tags', {
         tags: selectedTags,
         matchAll: matchAllTags,
         sort: sortOption
       });
+      
       setFilteredNotes(filtered);
-      setIsFiltering(false);
+      setNotesLoading(false);
     } catch (err) {
       setError(`Failed to filter notes: ${err}`);
-      setIsFiltering(false);
+      setNotesLoading(false);
     }
   }, [selectedTags, matchAllTags, sortOption]);
 
