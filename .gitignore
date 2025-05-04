@@ -14,7 +14,13 @@
 # Rust / Tauri
 /src-tauri/target/
 /src-tauri/gen/schemas
+/src-tauri/gen/apple
 /src-tauri/Cargo.lock
+
+# iOS/Xcode specific (in case you need to track some files in gen/apple later)
+xcuserdata/
+**/build/
+**/Externals/
 
 # Logs
 logs
