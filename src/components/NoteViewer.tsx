@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
 import { invoke } from '@tauri-apps/api/core';
 import { Note, NoteType } from '../types';
+import { FindReplacePanel, FindOptions } from './FindReplacePanel';
 
 /**
  * Props for the NoteViewer component
@@ -24,7 +25,7 @@ interface NoteViewerProps {
   onNoteContentUpdate?: (id: string, content: string) => void;
   
   /**
-   * Callback when note is renamed
+   * Callback when note is renamed 
    */
   onNoteRename?: (id: string, newName: string) => void;
   
@@ -114,6 +115,16 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       }
     };
   }, []);
+  
+  // Find and replace state
+  const [findReplaceVisible, setFindReplaceVisible] = useState(false);
+  const [matches, setMatches] = useState<number[]>([]);
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+  const [lastSearchText, setLastSearchText] = useState('');
+  const [lastSearchOptions, setLastSearchOptions] = useState<FindOptions>({
+    caseSensitive: false,
+    wholeWord: false
+  });
   
   // Handle content changes - only save on blur, not during typing
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -314,6 +325,236 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       setIsEditingPath(false);
     }
   };
+  
+  // Find text in content
+  const findTextInContent = useCallback((searchText: string, options: FindOptions) => {
+    if (!note || !searchText) {
+      setMatches([]);
+      setCurrentMatchIndex(0);
+      return;
+    }
+    
+    // Save the search text and options for later use
+    setLastSearchText(searchText);
+    setLastSearchOptions(options);
+    
+    const content = note.content;
+    const matches: number[] = [];
+    
+    // Create a regex for the search
+    let flags = 'g';
+    if (!options.caseSensitive) {
+      flags += 'i';
+    }
+    
+    let regex: RegExp;
+    if (options.wholeWord) {
+      regex = new RegExp(`\\b${escapeRegExp(searchText)}\\b`, flags);
+    } else {
+      regex = new RegExp(escapeRegExp(searchText), flags);
+    }
+    
+    // Find all matches
+    let match;
+    while ((match = regex.exec(content)) !== null) {
+      matches.push(match.index);
+    }
+    
+    setMatches(matches);
+    setCurrentMatchIndex(matches.length > 0 ? 1 : 0);
+    
+    // Scroll to the first match if there are any
+    if (matches.length > 0 && !isEditing) {
+      scrollToMatch(matches[0], searchText.length);
+    }
+  }, [note, isEditing]);
+  
+  // Escape special characters in regex
+  const escapeRegExp = (string: string) => {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  };
+  
+  // Scroll to a specific match
+  const scrollToMatch = (index: number, length: number) => {
+    if (!contentRef.current || isEditing) return;
+    
+    // Get all text nodes in the content element
+    const textNodes = getTextNodesIn(contentRef.current);
+    let currentIndex = 0;
+    let targetNode = null;
+    let targetOffset = 0;
+    
+    // Find the text node containing the match
+    for (const node of textNodes) {
+      const nodeLength = node.textContent?.length || 0;
+      
+      if (currentIndex + nodeLength > index) {
+        targetNode = node;
+        targetOffset = index - currentIndex;
+        break;
+      }
+      
+      currentIndex += nodeLength;
+    }
+    
+    if (targetNode) {
+      // Create a range to select the match
+      const range = document.createRange();
+      range.setStart(targetNode, targetOffset);
+      range.setEnd(targetNode, targetOffset + length);
+      
+      // Scroll to the range
+      const selection = window.getSelection();
+      if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(range);
+        
+        // Scroll the match into view
+        const rect = range.getBoundingClientRect();
+        const container = contentRef.current;
+        const containerRect = container.getBoundingClientRect();
+        
+        if (rect.top < containerRect.top || rect.bottom > containerRect.bottom) {
+          container.scrollTo({
+            top: container.scrollTop + (rect.top - containerRect.top) - 100,
+            behavior: 'smooth'
+          });
+        }
+      }
+    }
+  };
+  
+  // Get all text nodes in an element
+  const getTextNodesIn = (node: Node): Text[] => {
+    const textNodes: Text[] = [];
+    const walker = document.createTreeWalker(
+      node,
+      NodeFilter.SHOW_TEXT,
+      null
+    );
+    
+    let currentNode: Node | null = walker.nextNode();
+    while (currentNode) {
+      textNodes.push(currentNode as Text);
+      currentNode = walker.nextNode();
+    }
+    
+    return textNodes;
+  };
+  
+  // Find next match
+  const findNextMatch = () => {
+    if (matches.length === 0) return;
+    
+    const nextIndex = currentMatchIndex % matches.length + 1;
+    setCurrentMatchIndex(nextIndex);
+    
+    if (!isEditing) {
+      scrollToMatch(matches[nextIndex - 1], lastSearchText.length);
+    }
+  };
+  
+  // Find previous match
+  const findPreviousMatch = () => {
+    if (matches.length === 0) return;
+    
+    const prevIndex = currentMatchIndex > 1 ? currentMatchIndex - 1 : matches.length;
+    setCurrentMatchIndex(prevIndex);
+    
+    if (!isEditing) {
+      scrollToMatch(matches[prevIndex - 1], lastSearchText.length);
+    }
+  };
+  
+  // Replace current match
+  const replaceMatch = (replacement: string) => {
+    if (matches.length === 0 || !note) return;
+    
+    const matchIndex = matches[currentMatchIndex - 1];
+    const matchLength = lastSearchText.length;
+    
+    // Create the new content with the replacement
+    const newContent = 
+      note.content.substring(0, matchIndex) + 
+      replacement + 
+      note.content.substring(matchIndex + matchLength);
+    
+    // Update the content
+    setEditedContent(newContent);
+    saveContent(newContent);
+    
+    // Update matches after replacement
+    setTimeout(() => {
+      findTextInContent(lastSearchText, lastSearchOptions);
+    }, 100);
+  };
+  
+  // Replace all matches
+  const replaceAllMatches = (replacement: string) => {
+    if (matches.length === 0 || !note) return;
+    
+    // Create a regex for the search
+    let flags = 'g';
+    if (!lastSearchOptions.caseSensitive) {
+      flags += 'i';
+    }
+    
+    let regex: RegExp;
+    if (lastSearchOptions.wholeWord) {
+      regex = new RegExp(`\\b${escapeRegExp(lastSearchText)}\\b`, flags);
+    } else {
+      regex = new RegExp(escapeRegExp(lastSearchText), flags);
+    }
+    
+    // Replace all matches
+    const newContent = note.content.replace(regex, replacement);
+    
+    // Update the content
+    setEditedContent(newContent);
+    saveContent(newContent);
+    
+    // Clear matches after replacing all
+    setMatches([]);
+    setCurrentMatchIndex(0);
+  };
+  
+  // Highlight matches in content
+  
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + F to open find panel
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f' && note) {
+        e.preventDefault();
+        setFindReplaceVisible(true);
+      }
+      // Ctrl/Cmd + H to open find and replace panel
+      else if ((e.ctrlKey || e.metaKey) && e.key === 'h' && note) {
+        e.preventDefault();
+        setFindReplaceVisible(true);
+      }
+      // Escape to close find panel
+      else if (e.key === 'Escape' && findReplaceVisible) {
+        setFindReplaceVisible(false);
+      }
+      // F3 or Ctrl/Cmd + G to find next
+      else if ((e.key === 'F3' || ((e.ctrlKey || e.metaKey) && e.key === 'g')) && matches.length > 0) {
+        e.preventDefault();
+        findNextMatch();
+      }
+      // Shift + F3 or Ctrl/Cmd + Shift + G to find previous
+      else if ((e.shiftKey && e.key === 'F3') || ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'g') && matches.length > 0) {
+        e.preventDefault();
+        findPreviousMatch();
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [findReplaceVisible, matches.length, note]);
   if (loading) {
     return (
       <div className="note-viewer loading">
@@ -334,6 +575,18 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
 
   return (
     <div className="note-viewer">
+      {/* Find and Replace Panel */}
+      <FindReplacePanel
+        isVisible={findReplaceVisible}
+        onClose={() => setFindReplaceVisible(false)}
+        onFind={findTextInContent}
+        onFindNext={findNextMatch}
+        onFindPrevious={findPreviousMatch}
+        onReplace={replaceMatch}
+        onReplaceAll={replaceAllMatches}
+        totalMatches={matches.length}
+        currentMatchIndex={currentMatchIndex}
+      />
       <div className="note-header">
         {isRenamingTitle ? (
           <div className="note-title-edit">
@@ -441,10 +694,63 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
           </div>
         ) : note.file_type === NoteType.Markdown ? (
           <div className="markdown-content editable">
-            <ReactMarkdown>{note.content}</ReactMarkdown>
+            <ReactMarkdown>
+              {note.content}
+            </ReactMarkdown>
+            {/* We'll use the selection API to highlight matches in Markdown content */}
           </div>
         ) : (
-          <pre className="plain-text-content editable">{note.content}</pre>
+          <pre className="plain-text-content editable">
+            {!isEditing && matches.length > 0 ? (
+              <>
+                {(() => {
+                  let result = [];
+                  let lastIndex = 0;
+                  
+                  // Process each match
+                  for (let i = 0; i < matches.length; i++) {
+                    const position = matches[i];
+                    const isCurrentMatch = i === currentMatchIndex - 1;
+                    
+                    // Add text before the match
+                    if (position > lastIndex) {
+                      result.push(
+                        <span key={`text-${i}`}>
+                          {note.content.substring(lastIndex, position)}
+                        </span>
+                      );
+                    }
+                    
+                    // Add the match with appropriate highlighting
+                    result.push(
+                      <span 
+                        key={`match-${i}`} 
+                        className={`highlight-match${isCurrentMatch ? ' current' : ''}`}
+                      >
+                        {note.content.substring(position, position + lastSearchText.length)}
+                      </span>
+                    );
+                    
+                    // Update last index
+                    lastIndex = position + lastSearchText.length;
+                  }
+                  
+                  // Add remaining text after the last match
+                  if (lastIndex < note.content.length) {
+                    result.push(
+                      <span key="text-end">
+                        {note.content.substring(lastIndex)}
+                      </span>
+                    );
+                  }
+                  
+                  return result;
+                })()}
+              </>
+            ) : (
+              note.content
+            )}
+          </pre>
         )}
       </div>
     </div>

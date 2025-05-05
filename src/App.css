@@ -1031,6 +1031,233 @@ body {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Find and Replace Panel */
+.find-replace-panel {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  width: 300px;
+  z-index: 100;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.find-replace-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.toggle-replace-button {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.toggle-replace-button:hover {
+  background-color: rgba(52, 152, 219, 0.1);
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--error-color);
+}
+
+.find-section {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.find-input-container {
+  flex: 1;
+  position: relative;
+}
+
+.find-input, .replace-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.find-input:focus, .replace-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.find-count {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: #666;
+  pointer-events: none;
+}
+
+.find-actions, .replace-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.find-button, .replace-button, .replace-all-button {
+  background-color: #f0f0f0;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.find-button {
+  padding: 4px;
+}
+
+.find-button:hover, .replace-button:hover, .replace-all-button:hover {
+  background-color: #e0e0e0;
+}
+
+.find-button:disabled, .replace-button:disabled, .replace-all-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.find-options {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: #666;
+}
+
+.option-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.replace-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 5px;
+  border-top: 1px solid var(--border-color);
+}
+
+.replace-input-container {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.replace-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.replace-button, .replace-all-button {
+  font-size: 12px;
+}
+
+/* Highlighted text in note content */
+.highlight-match {
+  background-color: rgba(255, 255, 0, 0.3);
+  border-radius: 2px;
+}
+
+.highlight-match.current {
+  background-color: rgba(255, 165, 0, 0.5);
+  border-radius: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .find-replace-panel {
+    background-color: #2a2a2a;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+  }
+  
+  .find-input, .replace-input {
+    background-color: #333;
+    color: #f0f0f0;
+    border-color: #444;
+  }
+  
+  .find-count {
+    color: #bbb;
+  }
+  
+  .find-button, .replace-button, .replace-all-button {
+    background-color: #333;
+    border-color: #444;
+    color: #f0f0f0;
+  }
+  
+  .find-button:hover, .replace-button:hover, .replace-all-button:hover {
+    background-color: #444;
+  }
+  
+  .find-options {
+    color: #bbb;
+  }
+  
+  .close-button {
+    color: #bbb;
+  }
+  
+  .close-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .toggle-replace-button {
+    color: var(--primary-color);
+  }
+  
+  .toggle-replace-button:hover {
+    background-color: rgba(52, 152, 219, 0.2);
+  }
+  
+  .replace-section {
+    border-top: 1px solid #444;
+  }
+  
+  .highlight-match {
+    background-color: rgba(255, 255, 0, 0.2);
+  }
+  
+  .highlight-match.current {
+    background-color: rgba(255, 165, 0, 0.3);
+  }
+}
+
 /* New Note Button */
 .note-list-header {
   display: flex;
