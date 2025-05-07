@@ -1,4 +1,24 @@
 /**
+ * Mode for automatic search index updates
+ */
+export enum AutoUpdateMode {
+  /**
+   * Update only changed notes
+   */
+  Incremental = "Incremental",
+  
+  /**
+   * Rebuild entire index periodically
+   */
+  Periodic = "Periodic",
+  
+  /**
+   * Incremental updates + periodic rebuilds
+   */
+  Hybrid = "Hybrid"
+}
+
+/**
  * Application configuration
  */
 export interface AppConfig {
@@ -17,6 +37,21 @@ export interface AppConfig {
    * Default note type for new notes
    */
   default_note_type: NoteType | null;
+  
+  /**
+   * Whether to automatically update the search index when notes change
+   */
+  auto_update_search_index: boolean;
+  
+  /**
+   * Mode for automatic search index updates
+   */
+  auto_update_mode: AutoUpdateMode;
+  
+  /**
+   * Interval for periodic index rebuilds (in minutes)
+   */
+  auto_update_interval: number;
 }
 
 /**

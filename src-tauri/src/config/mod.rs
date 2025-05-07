@@ -4,6 +4,23 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use crate::notes::NoteType;
 
+/// Mode for automatic search index updates
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum AutoUpdateMode {
+    /// Update only changed notes
+    Incremental,
+    /// Rebuild entire index periodically
+    Periodic,
+    /// Incremental updates + periodic rebuilds
+    Hybrid,
+}
+
+impl Default for AutoUpdateMode {
+    fn default() -> Self {
+        Self::Incremental
+    }
+}
+
 /// Application configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppConfig {
@@ -18,6 +35,23 @@ pub struct AppConfig {
     /// Default note type for new notes
     #[serde(default)]
     pub default_note_type: Option<NoteType>,
+    
+    /// Whether to automatically update the search index when notes change
+    #[serde(default)]
+    pub auto_update_search_index: bool,
+    
+    /// Mode for automatic search index updates
+    #[serde(default)]
+    pub auto_update_mode: AutoUpdateMode,
+    
+    /// Interval for periodic index rebuilds (in minutes)
+    #[serde(default = "default_update_interval")]
+    pub auto_update_interval: u32,
+}
+
+/// Default update interval (30 minutes)
+fn default_update_interval() -> u32 {
+    30
 }
 
 impl Default for AppConfig {
@@ -30,6 +64,9 @@ impl Default for AppConfig {
             notes_dir: None,
             note_naming_pattern: Some("{number}-{title}.{extension}".to_string()),
             default_note_type: Some(NoteType::Markdown),
+            auto_update_search_index: true,
+            auto_update_mode: AutoUpdateMode::Incremental,
+            auto_update_interval: 30,
         }
     }
 }
@@ -133,6 +170,45 @@ impl ConfigManager {
     pub fn set_default_note_type(&mut self, note_type: NoteType) -> Result<()> {
         // Update config
         self.config.default_note_type = Some(note_type);
+        self.save_config()
+    }
+    
+    /// Sets whether to automatically update the search index
+    /// 
+    /// # Parameters
+    /// * `auto_update` - Whether to automatically update the search index
+    /// 
+    /// # Returns
+    /// Result indicating success or failure
+    pub fn set_auto_update_search_index(&mut self, auto_update: bool) -> Result<()> {
+        // Update config
+        self.config.auto_update_search_index = auto_update;
+        self.save_config()
+    }
+    
+    /// Sets the mode for automatic search index updates
+    /// 
+    /// # Parameters
+    /// * `mode` - Mode for automatic search index updates
+    /// 
+    /// # Returns
+    /// Result indicating success or failure
+    pub fn set_auto_update_mode(&mut self, mode: AutoUpdateMode) -> Result<()> {
+        // Update config
+        self.config.auto_update_mode = mode;
+        self.save_config()
+    }
+    
+    /// Sets the interval for periodic index rebuilds
+    /// 
+    /// # Parameters
+    /// * `interval` - Interval in minutes
+    /// 
+    /// # Returns
+    /// Result indicating success or failure
+    pub fn set_auto_update_interval(&mut self, interval: u32) -> Result<()> {
+        // Update config
+        self.config.auto_update_interval = interval;
         self.save_config()
     }
     

@@ -184,6 +184,92 @@ body {
   gap: 0.5rem;
 }
 
+/* Auto-update settings */
+.auto-update-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkbox-container input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.update-mode-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mode-select {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: #fff;
+  font-size: 0.9rem;
+}
+
+.update-interval-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.interval-input-container {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.interval-input {
+  width: 80px;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: #fff;
+  font-size: 0.9rem;
+}
+
+.save-interval-btn {
+  padding: 0.5rem 1rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.save-interval-btn:hover {
+  background-color: var(--hover-color);
+}
+
+.save-interval-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+@media (prefers-color-scheme: dark) {
+  .mode-select, .interval-input {
+    background-color: #2a2a2a;
+    color: #f0f0f0;
+    border-color: #444;
+  }
+  
+  .update-interval-selector {
+    border-top: 1px solid #444;
+  }
+}
+
 .rebuild-index-btn {
   padding: 0.5rem 1rem;
   background-color: var(--secondary-color);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
-import { AppConfig, NoteType } from '../types';
+import { AppConfig, NoteType, AutoUpdateMode } from '../types';
 
 /**
  * Props for the SettingsPanel component
@@ -48,7 +48,23 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const [noteTypeError, setNoteTypeError] = useState<string | null>(null);
   const [noteTypeSuccess, setNoteTypeSuccess] = useState(false);
   
-  // Initialize naming pattern and default note type from config
+  // Search index auto-update settings
+  const [autoUpdateIndex, setAutoUpdateIndex] = useState<boolean>(true);
+  const [savingAutoUpdate, setSavingAutoUpdate] = useState(false);
+  const [autoUpdateError, setAutoUpdateError] = useState<string | null>(null);
+  const [autoUpdateSuccess, setAutoUpdateSuccess] = useState(false);
+  
+  const [updateMode, setUpdateMode] = useState<AutoUpdateMode>(AutoUpdateMode.Incremental);
+  const [savingUpdateMode, setSavingUpdateMode] = useState(false);
+  const [updateModeError, setUpdateModeError] = useState<string | null>(null);
+  const [updateModeSuccess, setUpdateModeSuccess] = useState(false);
+  
+  const [updateInterval, setUpdateInterval] = useState<number>(30);
+  const [savingUpdateInterval, setSavingUpdateInterval] = useState(false);
+  const [updateIntervalError, setUpdateIntervalError] = useState<string | null>(null);
+  const [updateIntervalSuccess, setUpdateIntervalSuccess] = useState(false);
+  
+  // Initialize settings from config
   useEffect(() => {
     if (config?.note_naming_pattern) {
       setNamingPattern(config.note_naming_pattern);
@@ -60,6 +76,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       setDefaultNoteType(config.default_note_type);
     } else {
       setDefaultNoteType(NoteType.Markdown);
+    }
+    
+    // Initialize search index auto-update settings
+    if (config) {
+      setAutoUpdateIndex(config.auto_update_search_index);
+      setUpdateMode(config.auto_update_mode);
+      setUpdateInterval(config.auto_update_interval);
     }
   }, [config]);
 
@@ -193,6 +216,109 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       setSavingNoteType(false);
     }
   };
+  
+  /**
+   * Handles toggling automatic search index updates
+   * Updates the configuration with the new setting
+   */
+  const handleToggleAutoUpdate = async () => {
+    try {
+      setSavingAutoUpdate(true);
+      setAutoUpdateError(null);
+      setAutoUpdateSuccess(false);
+      
+      // Toggle the auto-update setting
+      const newValue = !autoUpdateIndex;
+      setAutoUpdateIndex(newValue);
+      
+      // Update configuration
+      const updatedConfig = await invoke<AppConfig>('set_auto_update_search_index', {
+        autoUpdate: newValue
+      });
+      
+      onConfigUpdate(updatedConfig);
+      setAutoUpdateSuccess(true);
+      setSavingAutoUpdate(false);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setAutoUpdateSuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Failed to update auto-update setting:', error);
+      setAutoUpdateError(`Failed to update setting: ${error}`);
+      setSavingAutoUpdate(false);
+    }
+  };
+  
+  /**
+   * Handles changing the update mode
+   * Updates the configuration with the new mode
+   */
+  const handleUpdateModeChange = async (newMode: AutoUpdateMode) => {
+    try {
+      setSavingUpdateMode(true);
+      setUpdateModeError(null);
+      setUpdateModeSuccess(false);
+      
+      setUpdateMode(newMode);
+      
+      // Update configuration
+      const updatedConfig = await invoke<AppConfig>('set_auto_update_mode', {
+        mode: newMode
+      });
+      
+      onConfigUpdate(updatedConfig);
+      setUpdateModeSuccess(true);
+      setSavingUpdateMode(false);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setUpdateModeSuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Failed to update mode setting:', error);
+      setUpdateModeError(`Failed to update mode: ${error}`);
+      setSavingUpdateMode(false);
+    }
+  };
+  
+  /**
+   * Handles changing the update interval
+   * Updates the configuration with the new interval
+   */
+  const handleUpdateIntervalChange = async () => {
+    try {
+      setSavingUpdateInterval(true);
+      setUpdateIntervalError(null);
+      setUpdateIntervalSuccess(false);
+      
+      // Validate interval
+      if (updateInterval < 1) {
+        setUpdateIntervalError('Interval must be at least 1 minute');
+        setSavingUpdateInterval(false);
+        return;
+      }
+      
+      // Update configuration
+      const updatedConfig = await invoke<AppConfig>('set_auto_update_interval', {
+        interval: updateInterval
+      });
+      
+      onConfigUpdate(updatedConfig);
+      setUpdateIntervalSuccess(true);
+      setSavingUpdateInterval(false);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setUpdateIntervalSuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Failed to update interval setting:', error);
+      setUpdateIntervalError(`Failed to update interval: ${error}`);
+      setSavingUpdateInterval(false);
+    }
+  };
 
   return (
     <div className="settings-panel settings-tab">
@@ -281,6 +407,74 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </button>
             {rebuildError && <div className="error-message">{rebuildError}</div>}
             {rebuildSuccess && <div className="success-message">Search index rebuilt successfully!</div>}
+          </div>
+        </div>
+        
+        <div className="setting-item">
+          <label>Automatic Index Updates</label>
+          <div className="auto-update-settings">
+            <div className="checkbox-container">
+              <input 
+                type="checkbox" 
+                id="auto-update-checkbox"
+                checked={autoUpdateIndex}
+                onChange={handleToggleAutoUpdate}
+                disabled={loading || savingAutoUpdate}
+              />
+              <label htmlFor="auto-update-checkbox">
+                Automatically update search index when notes change
+              </label>
+            </div>
+            
+            {autoUpdateError && <div className="error-message">{autoUpdateError}</div>}
+            {autoUpdateSuccess && <div className="success-message">Setting saved successfully!</div>}
+            
+            {autoUpdateIndex && (
+              <>
+                <div className="update-mode-selector">
+                  <label>Update Mode:</label>
+                  <select 
+                    value={updateMode}
+                    onChange={(e) => handleUpdateModeChange(e.target.value as AutoUpdateMode)}
+                    disabled={loading || savingUpdateMode || !autoUpdateIndex}
+                    className="mode-select"
+                  >
+                    <option value={AutoUpdateMode.Incremental}>Incremental (update only changed notes)</option>
+                    <option value={AutoUpdateMode.Periodic}>Periodic (rebuild entire index periodically)</option>
+                    <option value={AutoUpdateMode.Hybrid}>Hybrid (incremental + periodic rebuilds)</option>
+                  </select>
+                  
+                  {updateModeError && <div className="error-message">{updateModeError}</div>}
+                  {updateModeSuccess && <div className="success-message">Mode updated successfully!</div>}
+                </div>
+                
+                {(updateMode === AutoUpdateMode.Periodic || updateMode === AutoUpdateMode.Hybrid) && (
+                  <div className="update-interval-selector">
+                    <label>Rebuild interval (minutes):</label>
+                    <div className="interval-input-container">
+                      <input 
+                        type="number" 
+                        min="1"
+                        value={updateInterval}
+                        onChange={(e) => setUpdateInterval(parseInt(e.target.value) || 30)}
+                        disabled={loading || savingUpdateInterval || !autoUpdateIndex}
+                        className="interval-input"
+                      />
+                      <button 
+                        onClick={handleUpdateIntervalChange}
+                        disabled={loading || savingUpdateInterval || !autoUpdateIndex}
+                        className="save-interval-btn"
+                      >
+                        {savingUpdateInterval ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                    
+                    {updateIntervalError && <div className="error-message">{updateIntervalError}</div>}
+                    {updateIntervalSuccess && <div className="success-message">Interval updated successfully!</div>}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
