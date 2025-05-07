@@ -620,12 +620,12 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   
   // Custom component for ReactMarkdown to handle [[Note Title]] syntax
   const MarkdownWithLinks = ({ content }: { content: string }) => {
-    // Process the content to handle [[Note Title]] patterns
-    // We'll replace [[Note Title]] with a custom link format that ReactMarkdown can process
-    const processedContent = content.replace(
-      /\[\[(.*?)\]\]/g, 
-      (match, noteTitle) => `[${noteTitle}](#note-link-${encodeURIComponent(noteTitle)})`
-    );
+  // Process the content to handle [[Note Title]] patterns
+  // We'll replace [[Note Title]] with a custom link format that ReactMarkdown can process
+  const processedContent = content.replace(
+    /\[\[(.*?)\]\]/g, 
+    (_, noteTitle) => `[${noteTitle}](#note-link-${encodeURIComponent(noteTitle)})`
+  );
     
     return (
       <ReactMarkdown
@@ -889,7 +889,12 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
         </div>
         
         {/* Backlinks section */}
-        {backlinks.length > 0 && (
+        {backlinksLoading ? (
+          <div className="backlinks-section">
+            <h3>Linked from</h3>
+            <div className="loading-indicator">Loading backlinks...</div>
+          </div>
+        ) : backlinks.length > 0 && (
           <div className="backlinks-section">
             <h3>Linked from</h3>
             <ul className="backlinks-list">
