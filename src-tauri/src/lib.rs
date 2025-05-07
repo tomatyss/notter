@@ -277,6 +277,42 @@ async fn filter_notes_by_tags(
     Ok(filtered_notes)
 }
 
+/// Finds a note by its title
+/// 
+/// # Parameters
+/// * `title` - Title of the note to find
+/// 
+/// # Returns
+/// The note ID if found, None otherwise
+#[tauri::command]
+async fn find_note_by_title(title: String, state: State<'_, AppState>) -> Result<Option<String>, String> {
+    let note_manager_lock = state.note_manager.lock().map_err(|e| e.to_string())?;
+    
+    let Some(note_manager) = note_manager_lock.as_ref() else {
+        return Err("Note manager not initialized".into());
+    };
+    
+    note_manager.find_note_by_title(&title).map_err(|e| e.to_string())
+}
+
+/// Finds all notes that link to a specific note
+/// 
+/// # Parameters
+/// * `note_title` - Title of the note to find backlinks for
+/// 
+/// # Returns
+/// A list of note summaries that link to the specified note
+#[tauri::command]
+async fn find_backlinks(note_title: String, state: State<'_, AppState>) -> Result<Vec<NoteSummary>, String> {
+    let note_manager_lock = state.note_manager.lock().map_err(|e| e.to_string())?;
+    
+    let Some(note_manager) = note_manager_lock.as_ref() else {
+        return Err("Note manager not initialized".into());
+    };
+    
+    note_manager.find_backlinks(&note_title).map_err(|e| e.to_string())
+}
+
 /// Rebuilds the search index with all notes
 /// 
 /// # Returns
@@ -412,6 +448,8 @@ pub fn run() {
             rebuild_search_index,
             create_note,
             filter_notes_by_tags,
+            find_note_by_title,
+            find_backlinks,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

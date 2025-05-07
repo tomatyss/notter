@@ -11,6 +11,8 @@ Notter is a cross-platform desktop application for working with text files as a 
 - **Smart Searching**: Quickly find notes based on content, tags, or metadata
 - **Note Visualization**: See connections between your notes through different visualization techniques
 - **Tag-Based Organization**: Automatically extract and organize notes by tags
+- **Note Linking**: Create links between notes using `[[Note Title]]` syntax
+- **Backlinks**: View which notes link to the current note
 - **Markdown Support**: Full support for Markdown formatting
 - **Plain Text Support**: Work with simple text files
 - **Local-First Storage**: Your notes are stored as regular files on your system
@@ -73,6 +75,22 @@ This is the content of my note.
 ```
 
 These tags will be displayed in the note list and can be used for filtering and organization.
+
+### Note Linking
+
+You can create links between notes using the `[[Note Title]]` syntax. For example:
+
+```markdown
+# Project Ideas
+
+See my [[Research Notes]] for more information.
+```
+
+When viewing the note, the link will be clickable and will navigate to the linked note. This works in both Markdown and plain text files.
+
+### Backlinks
+
+Notter automatically tracks which notes link to the current note and displays them in a "Linked from" section at the bottom of the note. This helps you understand the connections between your notes and navigate between related content.
 
 ### Visualization Techniques
 

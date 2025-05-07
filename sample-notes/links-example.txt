@@ -1,0 +1,27 @@
+USING NOTE LINKS IN PLAIN TEXT
+
+This is an example of using note links in a plain text file. The same [[Note Title]] syntax works in both Markdown and plain text files.
+
+EXAMPLES:
+
+- [[Welcome to Notter]] - Link to the welcome note
+- [[Rust and Tauri]] - Link to information about Rust and Tauri
+- [[Note Visualization Techniques]] - Link to visualization techniques
+- [[Using Note Links]] - Link to the note about using links
+
+BENEFITS:
+
+1. Consistent syntax across file types
+2. Simple and intuitive to use
+3. Works with existing notes without special formatting
+4. Preserves readability even when viewed in other text editors
+
+HOW TO USE:
+
+Just type double square brackets around the exact title of the note you want to link to:
+
+[[Note Title]]
+
+These links will be clickable when viewing the note in Notter.
+
+#links #plaintext #example

@@ -587,4 +587,55 @@ impl NoteManager {
         
         Ok(id)
     }
+    
+    /// Finds a note by its title
+    /// 
+    /// # Parameters
+    /// * `title` - Title of the note to find
+    /// 
+    /// # Returns
+    /// The note ID if found, None otherwise
+    pub fn find_note_by_title(&self, title: &str) -> Result<Option<String>> {
+        // List all notes
+        let notes = self.list_notes(None)?;
+        
+        // Find the first note with matching title (case-insensitive)
+        for note in notes {
+            if note.title.to_lowercase() == title.to_lowercase() {
+                return Ok(Some(note.id));
+            }
+        }
+        
+        Ok(None)
+    }
+    
+    /// Finds all notes that link to a specific note
+    /// 
+    /// # Parameters
+    /// * `note_title` - Title of the note to find backlinks for
+    /// 
+    /// # Returns
+    /// A list of note summaries that link to the specified note
+    pub fn find_backlinks(&self, note_title: &str) -> Result<Vec<NoteSummary>> {
+        // List all notes
+        let notes = self.list_notes(None)?;
+        let mut backlinks = Vec::new();
+        
+        // Regular expression to find [[Note Title]] patterns
+        let link_pattern = format!(r"\[\[{}\]\]", regex::escape(note_title));
+        let regex = regex::Regex::new(&link_pattern)?;
+        
+        // Check each note for links to the specified note
+        for summary in notes {
+            // Get the full note to check its content
+            if let Ok(note) = self.get_note(&summary.id) {
+                // Check if the note content contains a link to the specified note
+                if regex.is_match(&note.content) {
+                    backlinks.push(summary);
+                }
+            }
+        }
+        
+        Ok(backlinks)
+    }
 }

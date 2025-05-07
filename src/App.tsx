@@ -367,6 +367,7 @@ function App() {
               onNoteRename={handleNoteRename}
               onNotePathChange={handleNoteMoveToPath}
               onTagClick={handleTagClick}
+              onSelectNote={handleSelectNote}
             />
           </div>
         </main>

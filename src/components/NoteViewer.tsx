@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
 import { invoke } from '@tauri-apps/api/core';
-import { Note, NoteType } from '../types';
+import { Note, NoteType, NoteSummary } from '../types';
 import { FindReplacePanel, FindOptions } from './FindReplacePanel';
 
 /**
@@ -38,6 +38,11 @@ interface NoteViewerProps {
    * Callback when a tag is clicked
    */
   onTagClick?: (tag: string) => void;
+  
+  /**
+   * Callback when a note is selected
+   */
+  onSelectNote?: (id: string) => void;
 }
 
 /**
@@ -52,7 +57,8 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   onNoteContentUpdate,
   onNoteRename,
   onNotePathChange,
-  onTagClick
+  onTagClick,
+  onSelectNote
 }) => {
   // State for edit mode
   const [isEditing, setIsEditing] = useState(false);
@@ -68,6 +74,9 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   // State for error message
   const [error, setError] = useState<string | null>(null);
+  // State for backlinks
+  const [backlinks, setBacklinks] = useState<NoteSummary[]>([]);
+  const [backlinksLoading, setBacklinksLoading] = useState(false);
   // Refs for autosave timers
   const contentAutosaveTimerRef = useRef<number | null>(null);
   const titleAutosaveTimerRef = useRef<number | null>(null);
@@ -83,6 +92,9 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       setEditedContent(note.content);
       setEditedTitle(note.title);
       setEditedPath(note.path);
+      
+      // Load backlinks for the current note
+      loadBacklinks(note.title);
     }
     setIsEditing(false);
     setIsRenamingTitle(false);
@@ -100,6 +112,20 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       clearTimeout(pathAutosaveTimerRef.current);
     }
   }, [note]);
+  
+  // Load backlinks for the current note
+  const loadBacklinks = async (noteTitle: string) => {
+    try {
+      setBacklinksLoading(true);
+      const backlinks = await invoke<NoteSummary[]>('find_backlinks', { noteTitle });
+      setBacklinks(backlinks);
+      setBacklinksLoading(false);
+    } catch (err) {
+      console.error('Failed to load backlinks:', err);
+      setBacklinks([]);
+      setBacklinksLoading(false);
+    }
+  };
   
   // Cleanup timers on unmount
   useEffect(() => {
@@ -520,6 +546,117 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   
   // Highlight matches in content
   
+  // Handle note link click
+  const handleNoteLinkClick = async (noteTitle: string) => {
+    if (!onSelectNote) return;
+    
+    try {
+      setError(null);
+      
+      // Find the note by title
+      const noteId = await invoke<string | null>('find_note_by_title', { title: noteTitle });
+      
+      if (noteId) {
+        // Navigate to the linked note
+        onSelectNote(noteId);
+      } else {
+        setError(`Note "${noteTitle}" not found`);
+      }
+    } catch (err) {
+      setError(`Failed to navigate to note: ${err}`);
+    }
+  };
+  
+  // Render plain text with note links
+  const renderPlainTextWithLinks = (content: string) => {
+    if (!content) return null;
+    
+    // Regular expression to find [[Note Title]] patterns
+    const linkRegex = /\[\[(.*?)\]\]/g;
+    
+    // Split content by link patterns
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+    
+    // Find all matches and build an array of text and link elements
+    while ((match = linkRegex.exec(content)) !== null) {
+      // Add text before the match
+      if (match.index > lastIndex) {
+        parts.push(
+          <span key={`text-${lastIndex}`}>
+            {content.substring(lastIndex, match.index)}
+          </span>
+        );
+      }
+      
+      // Add the link
+      const noteTitle = match[1];
+      parts.push(
+        <span 
+          key={`link-${match.index}`}
+          className="note-link"
+          onClick={() => handleNoteLinkClick(noteTitle)}
+          style={{ color: '#0366d6', cursor: 'pointer', textDecoration: 'underline' }}
+        >
+          {noteTitle}
+        </span>
+      );
+      
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // Add remaining text after the last match
+    if (lastIndex < content.length) {
+      parts.push(
+        <span key={`text-end`}>
+          {content.substring(lastIndex)}
+        </span>
+      );
+    }
+    
+    return parts;
+  };
+  
+  // Custom component for ReactMarkdown to handle [[Note Title]] syntax
+  const MarkdownWithLinks = ({ content }: { content: string }) => {
+    // Process the content to handle [[Note Title]] patterns
+    // We'll replace [[Note Title]] with a custom link format that ReactMarkdown can process
+    const processedContent = content.replace(
+      /\[\[(.*?)\]\]/g, 
+      (match, noteTitle) => `[${noteTitle}](#note-link-${encodeURIComponent(noteTitle)})`
+    );
+    
+    return (
+      <ReactMarkdown
+        components={{
+          a: ({ node, ...props }) => {
+            const href = props.href || '';
+            
+            // Check if this is one of our note links
+            if (href.startsWith('#note-link-')) {
+              const noteTitle = decodeURIComponent(href.substring('#note-link-'.length));
+              return (
+                <span 
+                  className="note-link"
+                  onClick={() => handleNoteLinkClick(noteTitle)}
+                  style={{ color: '#0366d6', cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  {props.children}
+                </span>
+              );
+            }
+            
+            // Regular link handling
+            return <a {...props} />;
+          }
+        }}
+      >
+        {processedContent}
+      </ReactMarkdown>
+    );
+  };
+  
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -673,84 +810,104 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
         </div>
       )}
       
-      <div 
-        className="note-content" 
-        onDoubleClick={handleContentDoubleClick}
-        ref={contentRef}
-        title="Double-click to edit"
-        style={{ display: 'flex', flexDirection: 'column', flex: 1 }}
-      >
-        {isEditing ? (
-          <div className="editor-container">
-            <textarea
-              value={editedContent}
-              onChange={handleContentChange}
-              onBlur={handleContentBlur}
-              onKeyDown={handleContentKeyDown}
-              className="content-editor"
-              autoFocus
-            />
-            {isSaving && <span className="autosave-indicator">Saving...</span>}
-          </div>
-        ) : note.file_type === NoteType.Markdown ? (
-          <div className="markdown-content editable">
-            <ReactMarkdown>
-              {note.content}
-            </ReactMarkdown>
-            {/* We'll use the selection API to highlight matches in Markdown content */}
-          </div>
-        ) : (
-          <pre className="plain-text-content editable">
-            {!isEditing && matches.length > 0 ? (
-              <>
-                {(() => {
-                  let result = [];
-                  let lastIndex = 0;
-                  
-                  // Process each match
-                  for (let i = 0; i < matches.length; i++) {
-                    const position = matches[i];
-                    const isCurrentMatch = i === currentMatchIndex - 1;
+      <div className="note-viewer-content" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <div 
+          className="note-content" 
+          onDoubleClick={handleContentDoubleClick}
+          ref={contentRef}
+          title="Double-click to edit"
+        >
+          {isEditing ? (
+            <div className="editor-container">
+              <textarea
+                value={editedContent}
+                onChange={handleContentChange}
+                onBlur={handleContentBlur}
+                onKeyDown={handleContentKeyDown}
+                className="content-editor"
+                autoFocus
+              />
+              {isSaving && <span className="autosave-indicator">Saving...</span>}
+            </div>
+          ) : note.file_type === NoteType.Markdown ? (
+            <div className="markdown-content editable">
+              <MarkdownWithLinks content={note.content} />
+            </div>
+          ) : (
+            <pre className="plain-text-content editable">
+              {!isEditing && matches.length > 0 ? (
+                <>
+                  {(() => {
+                    let result = [];
+                    let lastIndex = 0;
                     
-                    // Add text before the match
-                    if (position > lastIndex) {
+                    // Process each match
+                    for (let i = 0; i < matches.length; i++) {
+                      const position = matches[i];
+                      const isCurrentMatch = i === currentMatchIndex - 1;
+                      
+                      // Add text before the match
+                      if (position > lastIndex) {
+                        result.push(
+                          <span key={`text-${i}`}>
+                            {note.content.substring(lastIndex, position)}
+                          </span>
+                        );
+                      }
+                      
+                      // Add the match with appropriate highlighting
                       result.push(
-                        <span key={`text-${i}`}>
-                          {note.content.substring(lastIndex, position)}
+                        <span 
+                          key={`match-${i}`} 
+                          className={`highlight-match${isCurrentMatch ? ' current' : ''}`}
+                        >
+                          {note.content.substring(position, position + lastSearchText.length)}
+                        </span>
+                      );
+                      
+                      // Update last index
+                      lastIndex = position + lastSearchText.length;
+                    }
+                    
+                    // Add remaining text after the last match
+                    if (lastIndex < note.content.length) {
+                      result.push(
+                        <span key="text-end">
+                          {note.content.substring(lastIndex)}
                         </span>
                       );
                     }
                     
-                    // Add the match with appropriate highlighting
-                    result.push(
-                      <span 
-                        key={`match-${i}`} 
-                        className={`highlight-match${isCurrentMatch ? ' current' : ''}`}
-                      >
-                        {note.content.substring(position, position + lastSearchText.length)}
-                      </span>
-                    );
-                    
-                    // Update last index
-                    lastIndex = position + lastSearchText.length;
-                  }
-                  
-                  // Add remaining text after the last match
-                  if (lastIndex < note.content.length) {
-                    result.push(
-                      <span key="text-end">
-                        {note.content.substring(lastIndex)}
-                      </span>
-                    );
-                  }
-                  
-                  return result;
-                })()}
-              </>
-            ) : (
-              note.content
-            )}
-          </pre>
+                    return result;
+                  })()}
+                </>
+              ) : (
+                renderPlainTextWithLinks(note.content)
+              )}
+            </pre>
+          )}
+        </div>
+        
+        {/* Backlinks section */}
+        {backlinks.length > 0 && (
+          <div className="backlinks-section">
+            <h3>Linked from</h3>
+            <ul className="backlinks-list">
+              {backlinks.map(link => (
+                <li key={link.id} className="backlink-item">
+                  <span 
+                    className="backlink-title note-link"
+                    onClick={() => onSelectNote && onSelectNote(link.id)}
+                  >
+                    {link.title}
+                  </span>
+                  <span className="backlink-date">
+                    {format(new Date(link.modified), 'MMM d, yyyy')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
     </div>
