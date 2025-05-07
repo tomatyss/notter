@@ -58,7 +58,8 @@ export const NewNoteButton: React.FC<NewNoteButtonProps> = ({
   const handleOpenModal = () => {
     setIsModalOpen(true);
     setTitle('');
-    setFileType(NoteType.Markdown);
+    // Use the default note type from config if available
+    setFileType(config?.default_note_type || NoteType.Markdown);
     setError(null);
   };
   

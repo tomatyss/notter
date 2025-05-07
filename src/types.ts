@@ -12,6 +12,11 @@ export interface AppConfig {
    * Supports placeholders: {number}, {title}, {extension}
    */
   note_naming_pattern: string | null;
+  
+  /**
+   * Default note type for new notes
+   */
+  default_note_type: NoteType | null;
 }
 
 /**

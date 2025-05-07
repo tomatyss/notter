@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
-import { AppConfig } from '../types';
+import { AppConfig, NoteType } from '../types';
 
 /**
  * Props for the SettingsPanel component
@@ -43,13 +43,23 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const [savingPattern, setSavingPattern] = useState(false);
   const [patternError, setPatternError] = useState<string | null>(null);
   const [patternSuccess, setPatternSuccess] = useState(false);
+  const [defaultNoteType, setDefaultNoteType] = useState<NoteType>(NoteType.Markdown);
+  const [savingNoteType, setSavingNoteType] = useState(false);
+  const [noteTypeError, setNoteTypeError] = useState<string | null>(null);
+  const [noteTypeSuccess, setNoteTypeSuccess] = useState(false);
   
-  // Initialize naming pattern from config
+  // Initialize naming pattern and default note type from config
   useEffect(() => {
     if (config?.note_naming_pattern) {
       setNamingPattern(config.note_naming_pattern);
     } else {
       setNamingPattern('{number}-{title}.{extension}');
+    }
+    
+    if (config?.default_note_type) {
+      setDefaultNoteType(config.default_note_type);
+    } else {
+      setDefaultNoteType(NoteType.Markdown);
     }
   }, [config]);
 
@@ -153,6 +163,36 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       setSavingPattern(false);
     }
   };
+  
+  /**
+   * Handles saving the default note type
+   * Updates the configuration with the new default note type
+   */
+  const handleSaveDefaultNoteType = async () => {
+    try {
+      setSavingNoteType(true);
+      setNoteTypeError(null);
+      setNoteTypeSuccess(false);
+      
+      // Update configuration with new default note type
+      const updatedConfig = await invoke<AppConfig>('set_default_note_type', {
+        noteType: defaultNoteType
+      });
+      
+      onConfigUpdate(updatedConfig);
+      setNoteTypeSuccess(true);
+      setSavingNoteType(false);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setNoteTypeSuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Failed to save default note type:', error);
+      setNoteTypeError(`Failed to save default note type: ${error}`);
+      setSavingNoteType(false);
+    }
+  };
 
   return (
     <div className="settings-panel settings-tab">
@@ -201,6 +241,32 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </div>
           {patternError && <div className="error-message">{patternError}</div>}
           {patternSuccess && <div className="success-message">Naming pattern saved successfully!</div>}
+        </div>
+        
+        <div className="setting-item">
+          <label>Default Note Type</label>
+          <div className="pattern-selector">
+            <select 
+              value={defaultNoteType}
+              onChange={(e) => setDefaultNoteType(e.target.value as NoteType)}
+              className="pattern-input"
+            >
+              <option value={NoteType.Markdown}>Markdown</option>
+              <option value={NoteType.PlainText}>Plain Text</option>
+            </select>
+            <button 
+              onClick={handleSaveDefaultNoteType}
+              disabled={loading || savingNoteType}
+              className="save-pattern-btn"
+            >
+              {savingNoteType ? 'Saving...' : 'Save Default'}
+            </button>
+          </div>
+          <div className="pattern-help">
+            Default type to use when creating new notes
+          </div>
+          {noteTypeError && <div className="error-message">{noteTypeError}</div>}
+          {noteTypeSuccess && <div className="success-message">Default note type saved successfully!</div>}
         </div>
 
         <div className="setting-item">

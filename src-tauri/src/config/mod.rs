@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
+use crate::notes::NoteType;
 
 /// Application configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -13,6 +14,10 @@ pub struct AppConfig {
     /// Supports placeholders: {number}, {title}, {extension}
     #[serde(default)]
     pub note_naming_pattern: Option<String>,
+    
+    /// Default note type for new notes
+    #[serde(default)]
+    pub default_note_type: Option<NoteType>,
 }
 
 impl Default for AppConfig {
@@ -24,6 +29,7 @@ impl Default for AppConfig {
         Self {
             notes_dir: None,
             note_naming_pattern: Some("{number}-{title}.{extension}".to_string()),
+            default_note_type: Some(NoteType::Markdown),
         }
     }
 }
@@ -114,6 +120,19 @@ impl ConfigManager {
         
         // Update config
         self.config.note_naming_pattern = Some(pattern);
+        self.save_config()
+    }
+    
+    /// Sets the default note type
+    /// 
+    /// # Parameters
+    /// * `note_type` - Default note type for new notes
+    /// 
+    /// # Returns
+    /// Result indicating success or failure
+    pub fn set_default_note_type(&mut self, note_type: NoteType) -> Result<()> {
+        // Update config
+        self.config.default_note_type = Some(note_type);
         self.save_config()
     }
     

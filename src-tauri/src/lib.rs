@@ -48,6 +48,23 @@ async fn set_note_naming_pattern(pattern: String, state: State<'_, AppState>) ->
     Ok(config_manager.get_config())
 }
 
+/// Sets the default note type
+/// 
+/// # Parameters
+/// * `note_type` - Default note type for new notes
+/// 
+/// # Returns
+/// The updated application configuration
+#[tauri::command]
+async fn set_default_note_type(note_type: notes::NoteType, state: State<'_, AppState>) -> Result<AppConfig, String> {
+    let mut config_manager = state.config_manager.lock().map_err(|e| e.to_string())?;
+    
+    config_manager.set_default_note_type(note_type)
+        .map_err(|e| e.to_string())?;
+    
+    Ok(config_manager.get_config())
+}
+
 /// Selects a folder for storing notes
 /// 
 /// # Parameters
@@ -439,6 +456,7 @@ pub fn run() {
             get_config,
             select_folder,
             set_note_naming_pattern,
+            set_default_note_type,
             list_notes,
             get_note,
             update_note_content,
