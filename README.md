@@ -4,7 +4,7 @@ Notter is a cross-platform desktop application for working with text files as a 
 
 > **Disclaimer**: This project is currently in active development. Features may change, and some functionality might be incomplete. Contributions and feedback are welcome!
 
-![Notter App](https://via.placeholder.com/800x450?text=Notter+Screenshot)
+![Notter App](./public/screen.png)
 
 ## Features
 
@@ -26,7 +26,7 @@ Notter is a cross-platform desktop application for working with text files as a 
 
 ### Download
 
-Download the latest version for your platform from the [Releases](https://github.com/yourusername/notter/releases) page.
+Download the latest version for your platform from the [Releases](https://github.com/tomatyss/notter/releases) page.
 
 #### Windows
 
@@ -126,7 +126,7 @@ Notter is built with a modern tech stack:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/notter.git
+   git clone https://github.com/tomatyss/notter.git
    cd notter
    ```
 
