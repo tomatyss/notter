@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
 import { invoke } from '@tauri-apps/api/core';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { Note, NoteType, NoteSummary } from '../types';
 import { FindReplacePanel, FindOptions } from './FindReplacePanel';
 
@@ -567,46 +568,169 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
     }
   };
   
-  // Render plain text with note links
+  /**
+   * Opens a URL in the default browser
+   * 
+   * @param url The URL to open
+   */
+  const handleExternalLinkClick = async (url: string) => {
+    try {
+      await openUrl(url);
+    } catch (err) {
+      setError(`Failed to open link: ${err}`);
+    }
+  };
+  
+  /**
+   * Regular expression to detect URLs in plain text
+   * Matches http://, https://, www. URLs with improved pattern matching
+   */
+  const urlRegex = /(https?:\/\/[^\s<>]+)|(www\.[^\s<>]+\.[^\s<>]+)/g;
+  
+  /**
+   * Checks if a string is a valid URL
+   * 
+   * @param text The text to check
+   * @returns True if the text is a valid URL
+   */
+  const isValidUrl = (text: string) => {
+    if (text.startsWith('http://') || text.startsWith('https://')) {
+      return true;
+    }
+    
+    if (text.startsWith('www.')) {
+      return true;
+    }
+    
+    return false;
+  };
+  
+  /**
+   * Ensures a URL has a proper protocol
+   * 
+   * @param url The URL to normalize
+   * @returns A URL with proper protocol
+   */
+  const normalizeUrl = (url: string) => {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    
+    if (url.startsWith('www.')) {
+      return `https://${url}`;
+    }
+    
+    return url;
+  };
+  
+  /**
+   * Render plain text with note links and external URLs
+   * This improved version ensures consistent link detection and styling
+   * 
+   * @param content The note content to render
+   * @returns React elements with clickable links
+   */
   const renderPlainTextWithLinks = (content: string) => {
     if (!content) return null;
     
-    // Regular expression to find [[Note Title]] patterns
-    const linkRegex = /\[\[(.*?)\]\]/g;
-    
-    // Split content by link patterns
+    // Create a copy of the content to work with
+    let processedContent = content;
     const parts = [];
-    let lastIndex = 0;
-    let match;
     
-    // Find all matches and build an array of text and link elements
-    while ((match = linkRegex.exec(content)) !== null) {
-      // Add text before the match
-      if (match.index > lastIndex) {
+    // Step 1: Extract all note links and replace with placeholders
+    const noteLinkRegex = /\[\[(.*?)\]\]/g;
+    const noteLinks: {index: number, title: string, length: number}[] = [];
+    
+    let match;
+    while ((match = noteLinkRegex.exec(content)) !== null) {
+      noteLinks.push({
+        index: match.index,
+        title: match[1],
+        length: match[0].length
+      });
+    }
+    
+    // Step 2: Extract all URLs and replace with placeholders
+    const urlMatches = [...content.matchAll(urlRegex)];
+    const urls: {index: number, url: string, length: number}[] = [];
+    
+    for (const match of urlMatches) {
+      // Skip URLs that are part of note links
+      const isInsideNoteLink = noteLinks.some(link => 
+        match.index >= link.index && 
+        match.index < link.index + link.length
+      );
+      
+      if (!isInsideNoteLink) {
+        urls.push({
+          index: match.index,
+          url: match[0],
+          length: match[0].length
+        });
+      }
+    }
+    
+    // Step 3: Sort all links by their position in the text
+    const allLinks = [
+      ...noteLinks.map(link => ({
+        type: 'note' as const,
+        index: link.index,
+        content: link.title,
+        length: link.length
+      })),
+      ...urls.map(url => ({
+        type: 'url' as const,
+        index: url.index,
+        content: url.url,
+        length: url.length
+      }))
+    ].sort((a, b) => a.index - b.index);
+    
+    // Step 4: Build the final content with all links properly handled
+    let lastIndex = 0;
+    
+    for (const link of allLinks) {
+      // Add text before the link
+      if (link.index > lastIndex) {
         parts.push(
           <span key={`text-${lastIndex}`}>
-            {content.substring(lastIndex, match.index)}
+            {content.substring(lastIndex, link.index)}
           </span>
         );
       }
       
-      // Add the link
-      const noteTitle = match[1];
-      parts.push(
-        <span 
-          key={`link-${match.index}`}
-          className="note-link"
-          onClick={() => handleNoteLinkClick(noteTitle)}
-          style={{ color: '#0366d6', cursor: 'pointer', textDecoration: 'underline' }}
-        >
-          {noteTitle}
-        </span>
-      );
+      // Add the link with appropriate handler and styling
+      if (link.type === 'note') {
+        parts.push(
+          <span 
+            key={`note-link-${link.index}`}
+            className="note-link"
+            onClick={() => handleNoteLinkClick(link.content)}
+            style={{ color: '#0366d6', cursor: 'pointer', textDecoration: 'underline' }}
+            title={`Open note: ${link.content}`}
+          >
+            {link.content}
+          </span>
+        );
+      } else { // URL link
+        parts.push(
+          <span 
+            key={`url-${link.index}`}
+            className="external-link"
+            onClick={() => handleExternalLinkClick(normalizeUrl(link.content))}
+            style={{ color: '#0366d6', cursor: 'pointer', textDecoration: 'underline' }}
+            title={`Open ${link.content} in browser`}
+          >
+            {link.content}
+          </span>
+        );
+      }
       
-      lastIndex = match.index + match[0].length;
+      // Update lastIndex to after the link
+      lastIndex = link.index + link.length;
     }
     
-    // Add remaining text after the last match
+    // Add remaining text after the last link
     if (lastIndex < content.length) {
       parts.push(
         <span key={`text-end`}>
@@ -615,10 +739,11 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       );
     }
     
-    return parts;
+    return parts.length > 0 ? parts : <span>{content}</span>;
   };
   
-  // Custom component for ReactMarkdown to handle [[Note Title]] syntax
+  
+  // Custom component for ReactMarkdown to handle [[Note Title]] syntax and external links
   const MarkdownWithLinks = ({ content }: { content: string }) => {
   // Process the content to handle [[Note Title]] patterns
   // We'll replace [[Note Title]] with a custom link format that ReactMarkdown can process
@@ -641,13 +766,28 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                   className="note-link"
                   onClick={() => handleNoteLinkClick(noteTitle)}
                   style={{ color: '#0366d6', cursor: 'pointer', textDecoration: 'underline' }}
+                  title={`Open note: ${noteTitle}`}
                 >
                   {props.children}
                 </span>
               );
             }
             
-            // Regular link handling
+            // External link handling - open in default browser
+            if (isValidUrl(href)) {
+              return (
+                <span 
+                  className="external-link"
+                  onClick={() => handleExternalLinkClick(href)}
+                  style={{ color: '#0366d6', cursor: 'pointer', textDecoration: 'underline' }}
+                  title={`Open ${href} in browser`}
+                >
+                  {props.children}
+                </span>
+              );
+            }
+            
+            // Regular link handling for other links
             return <a {...props} />;
           }
         }}
