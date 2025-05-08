@@ -100,27 +100,37 @@ impl SearchService {
         
         let hits = self.query_engine.search(query, &options)?;
         
-        // Convert hits to SearchResult objects
-        let results = hits.into_iter()
-            .map(|hit| SearchResult {
-                note: NoteSummary {
-                    id: hit.id,
-                    title: hit.title,
-                    created: hit.created,
-                    modified: hit.modified,
-                    tags: hit.tags,
-                    file_type: if hit.file_type.contains("Markdown") {
-                        NoteType::Markdown
-                    } else {
-                        NoteType::PlainText
-                    },
-                },
-                snippets: hit.snippets,
-                score: hit.score,
-            })
-            .collect();
+        // Deduplicate results by note ID
+        let mut unique_results = Vec::new();
+        let mut seen_ids = std::collections::HashSet::new();
         
-        Ok(results)
+        for hit in hits {
+            if !seen_ids.contains(&hit.id) {
+                seen_ids.insert(hit.id.clone());
+                
+                let result = SearchResult {
+                    note: NoteSummary {
+                        id: hit.id,
+                        title: hit.title,
+                        created: hit.created,
+                        modified: hit.modified,
+                        tags: hit.tags,
+                        file_type: if hit.file_type.contains("Markdown") {
+                            NoteType::Markdown
+                        } else {
+                            NoteType::PlainText
+                        },
+                    },
+                    snippets: hit.snippets,
+                    score: hit.score,
+                };
+                
+                unique_results.push(result);
+            }
+        }
+        
+        info!("Search for '{}' returned {} unique results (after deduplication)", query, unique_results.len());
+        Ok(unique_results)
     }
     
     /// Searches for notes with a specific field value
@@ -141,27 +151,37 @@ impl SearchService {
         
         let hits = self.query_engine.search_by_field(field, value, &options)?;
         
-        // Convert hits to SearchResult objects
-        let results = hits.into_iter()
-            .map(|hit| SearchResult {
-                note: NoteSummary {
-                    id: hit.id,
-                    title: hit.title,
-                    created: hit.created,
-                    modified: hit.modified,
-                    tags: hit.tags,
-                    file_type: if hit.file_type.contains("Markdown") {
-                        NoteType::Markdown
-                    } else {
-                        NoteType::PlainText
-                    },
-                },
-                snippets: hit.snippets,
-                score: hit.score,
-            })
-            .collect();
+        // Deduplicate results by note ID
+        let mut unique_results = Vec::new();
+        let mut seen_ids = std::collections::HashSet::new();
         
-        Ok(results)
+        for hit in hits {
+            if !seen_ids.contains(&hit.id) {
+                seen_ids.insert(hit.id.clone());
+                
+                let result = SearchResult {
+                    note: NoteSummary {
+                        id: hit.id,
+                        title: hit.title,
+                        created: hit.created,
+                        modified: hit.modified,
+                        tags: hit.tags,
+                        file_type: if hit.file_type.contains("Markdown") {
+                            NoteType::Markdown
+                        } else {
+                            NoteType::PlainText
+                        },
+                    },
+                    snippets: hit.snippets,
+                    score: hit.score,
+                };
+                
+                unique_results.push(result);
+            }
+        }
+        
+        info!("Field search for '{}={}' returned {} unique results (after deduplication)", field, value, unique_results.len());
+        Ok(unique_results)
     }
     
     /// Rebuilds the search index with all notes
