@@ -82,6 +82,7 @@ export const OptimizedNoteViewer: React.FC<OptimizedNoteViewerProps> = ({
     editedPath,
     isSaving,
     error, setError,
+    textareaRef,
     handleContentChange,
     handleTitleChange,
     handlePathChange,
@@ -243,6 +244,7 @@ export const OptimizedNoteViewer: React.FC<OptimizedNoteViewerProps> = ({
           onContentBlur={handleContentBlur}
           onContentKeyDown={handleContentKeyDown}
           onContentDoubleClick={handleContentDoubleClick}
+          textareaRef={textareaRef}
           onNoteLinkClick={handleNoteLinkClick}
           onExternalLinkClick={handleExternalLinkClick}
         />

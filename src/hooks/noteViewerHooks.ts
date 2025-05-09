@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, RefObject } from 'react';
+import { useState, useEffect, useRef, useCallback, RefObject, MutableRefObject } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Note, NoteSummary } from '../types';
 
@@ -31,11 +31,15 @@ export const useNoteEditing = (
   const [isSaving, setIsSaving] = useState(false);
   // State for error message
   const [error, setError] = useState<string | null>(null);
+  // State for cursor position
+  const [clickPosition, setClickPosition] = useState<number | null>(null);
   
   // Refs for autosave timers
   const contentAutosaveTimerRef = useRef<number | null>(null);
   const titleAutosaveTimerRef = useRef<number | null>(null);
   const pathAutosaveTimerRef = useRef<number | null>(null);
+  // Ref for the textarea element
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   
   // Reset states when note changes
   useEffect(() => {
@@ -48,6 +52,7 @@ export const useNoteEditing = (
     setIsRenamingTitle(false);
     setIsEditingPath(false);
     setError(null);
+    setClickPosition(null);
     
     // Clear any pending autosave timers
     if (contentAutosaveTimerRef.current) {
@@ -109,10 +114,22 @@ export const useNoteEditing = (
     }
   };
   
+  // Set cursor position when textarea is rendered and focused
+  useEffect(() => {
+    if (isEditing && textareaRef.current && clickPosition !== null) {
+      // Set cursor position
+      textareaRef.current.focus();
+      textareaRef.current.setSelectionRange(clickPosition, clickPosition);
+    }
+  }, [isEditing, clickPosition]);
+
   // Handle double click on content to edit
-  const handleContentDoubleClick = () => {
+  const handleContentDoubleClick = (position?: number) => {
     if (!isEditing && note) {
       setIsEditing(true);
+      if (position !== undefined) {
+        setClickPosition(position);
+      }
     }
   };
   
@@ -285,6 +302,7 @@ export const useNoteEditing = (
     editedPath, setEditedPath,
     isSaving,
     error, setError,
+    textareaRef,
     handleContentChange,
     handleTitleChange,
     handlePathChange,

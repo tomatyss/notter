@@ -1,7 +1,7 @@
 import React, { RefObject } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Note, NoteType } from '../../types';
-import { createMatchSegments, noteLinkRegex, urlRegex, isValidUrl, normalizeUrl } from '../../utils/textUtils';
+import { createMatchSegments, noteLinkRegex, urlRegex, isValidUrl, normalizeUrl, getTextNodesIn } from '../../utils/textUtils';
 
 /**
  * Props for the NoteContent component
@@ -65,7 +65,12 @@ interface NoteContentProps {
   /**
    * Callback when content is double-clicked
    */
-  onContentDoubleClick: () => void;
+  onContentDoubleClick: (position?: number) => void;
+  
+  /**
+   * Reference to the textarea element
+   */
+  textareaRef?: RefObject<HTMLTextAreaElement>;
   
   /**
    * Callback when a note link is clicked
@@ -97,6 +102,7 @@ export const NoteContent: React.FC<NoteContentProps> = ({
   onContentBlur,
   onContentKeyDown,
   onContentDoubleClick,
+  textareaRef,
   onNoteLinkClick,
   onExternalLinkClick
 }) => {
@@ -296,16 +302,59 @@ export const NoteContent: React.FC<NoteContentProps> = ({
     });
   };
   
+  /**
+   * Calculate the text position from a mouse event
+   * 
+   * @param e The mouse event
+   * @returns The position in the text
+   */
+  const calculateTextPosition = (e: React.MouseEvent) => {
+    if (!contentRef.current || !note) return 0;
+    
+    // Get all text nodes in the content element
+    const textNodes = getTextNodesIn(contentRef.current);
+    const range = document.caretRangeFromPoint(e.clientX, e.clientY);
+    
+    if (!range) return 0;
+    
+    // Find the clicked node and offset
+    const clickedNode = range.startContainer;
+    const clickedOffset = range.startOffset;
+    
+    // Calculate the total offset by summing the lengths of all nodes before the clicked node
+    let totalOffset = 0;
+    for (const node of textNodes) {
+      if (node === clickedNode) {
+        totalOffset += clickedOffset;
+        break;
+      }
+      totalOffset += node.textContent?.length || 0;
+    }
+    
+    return totalOffset;
+  };
+  
+  /**
+   * Handle double click with position calculation
+   */
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    if (!isEditing && note) {
+      const position = calculateTextPosition(e);
+      onContentDoubleClick(position);
+    }
+  };
+
   return (
     <div 
       className="note-content" 
-      onDoubleClick={onContentDoubleClick}
+      onDoubleClick={handleDoubleClick}
       ref={contentRef}
       title="Double-click to edit"
     >
       {isEditing ? (
         <div className="editor-container">
           <textarea
+            ref={textareaRef}
             value={editedContent}
             onChange={onContentChange}
             onBlur={onContentBlur}
