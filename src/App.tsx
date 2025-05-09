@@ -3,12 +3,13 @@ import { invoke } from "@tauri-apps/api/core";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { NoteList } from "./components/NoteList";
 import { NewNoteButton, NewNoteButtonRef } from "./components/NewNoteButton";
-import { NoteViewer } from "./components/NoteViewer";
+import { OptimizedNoteViewer } from "./components/OptimizedNoteViewer";
 import { SearchPanel } from "./components/SearchPanel";
 import { TagFilter } from "./components/TagFilter";
 import MobileLayout from "./components/MobileLayout";
 import { AppConfig, Note, NoteSummary, SortOption } from "./types";
 import { useNewNoteShortcut } from "./hooks/useNewNoteShortcut";
+import { useCachedNotes } from "./hooks/useCachedNotes";
 import "./App.css";
 
 /**
@@ -22,12 +23,13 @@ function App() {
   
   // Use the custom hook to set up the keyboard shortcut
   useNewNoteShortcut(newNoteButtonRef);
+  
   // Tab state
   const [activeTab, setActiveTab] = useState<'notes' | 'settings'>('notes');
+  
   // Application state
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [notes, setNotes] = useState<NoteSummary[]>([]);
-  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [selectedNoteId, setSelectedNoteId] = useState<string | undefined>(undefined);
   const [sortOption, setSortOption] = useState<SortOption>(SortOption.ModifiedNewest);
   
@@ -41,11 +43,25 @@ function App() {
   // Loading states
   const [configLoading, setConfigLoading] = useState(true);
   const [notesLoading, setNotesLoading] = useState(false);
-  const [noteLoading, setNoteLoading] = useState(false);
   
   // Error state
   const [error, setError] = useState<string | null>(null);
   
+  // Use the cached notes hook
+  const {
+    selectedNote,
+    noteLoading,
+    error: noteError,
+    loadNote,
+    invalidateCache
+  } = useCachedNotes();
+
+  // Set error from note loading
+  useEffect(() => {
+    if (noteError) {
+      setError(noteError);
+    }
+  }, [noteError]);
 
   // Collect all unique tags from notes
   const collectAllTags = useCallback((notesList: NoteSummary[]) => {
@@ -71,7 +87,6 @@ function App() {
       setConfigLoading(false); // Ensure configLoading is set to false even if there's an error
     }
   }, [sortOption, collectAllTags]);
-
 
   // Load initial configuration
   useEffect(() => {
@@ -180,23 +195,11 @@ function App() {
 
   // Load a specific note
   const handleSelectNote = async (id: string) => {
-    try {
-      // Set loading state first
-      setNoteLoading(true);
-      
-      // Load the note content
-      const note = await invoke<Note>('get_note', { id });
-      
-      // Update the selected note ID and note content
-      setSelectedNoteId(id);
-      setSelectedNote(note);
-      
-      // Clear loading state
-      setNoteLoading(false);
-    } catch (err) {
-      setError(`Failed to load note: ${err}`);
-      setNoteLoading(false);
-    }
+    // Update the selected note ID
+    setSelectedNoteId(id);
+    
+    // Load the note content using the cached notes hook
+    await loadNote(id);
   };
   
   // Handle note content update
@@ -213,8 +216,11 @@ function App() {
       
       // Verify that the selected ID hasn't changed during the update
       if (id === selectedNoteId) {
-        // Update the selected note
-        setSelectedNote(updatedNote);
+        // Invalidate the cache for this note
+        invalidateCache(id);
+        
+        // Reload the note to update the cache
+        await loadNote(id);
         
         // Update the note in the notes list in the background
         setTimeout(() => {
@@ -233,10 +239,8 @@ function App() {
       }
     } catch (err) {
       setError(`Failed to update note: ${err}`);
-      // Clear the selected note on error to prevent showing stale data
+      // Reload the note to ensure we have the latest version
       if (id === selectedNoteId) {
-        setNoteLoading(false);
-        // Reload the note to ensure we have the latest version
         handleSelectNote(id);
       }
     }
@@ -254,9 +258,14 @@ function App() {
       // Rename the note
       const updatedNote = await invoke<Note>('rename_note', { id, newName });
       
-      // Update the selected note
-      setSelectedNote(updatedNote);
-      setSelectedNoteId(updatedNote.id); // ID might have changed due to path change
+      // Invalidate the cache for this note
+      invalidateCache(id);
+      
+      // Update the selected note ID (might have changed due to path change)
+      setSelectedNoteId(updatedNote.id);
+      
+      // Reload the note to update the cache
+      await loadNote(updatedNote.id);
       
       // Update the note in the notes list
       // We'll do this in the background to avoid UI refresh during editing
@@ -284,9 +293,14 @@ function App() {
       // Move the note to the new path
       const updatedNote = await invoke<Note>('move_note', { id, newPath });
       
-      // Update the selected note
-      setSelectedNote(updatedNote);
-      setSelectedNoteId(updatedNote.id); // ID might have changed due to path change
+      // Invalidate the cache for this note
+      invalidateCache(id);
+      
+      // Update the selected note ID (might have changed due to path change)
+      setSelectedNoteId(updatedNote.id);
+      
+      // Reload the note to update the cache
+      await loadNote(updatedNote.id);
       
       // Update the note in the notes list
       // We'll do this in the background to avoid UI refresh during editing
@@ -319,7 +333,7 @@ function App() {
     
     // Select the new note
     setSelectedNoteId(newNote.id);
-    setSelectedNote(newNote);
+    loadNote(newNote.id);
     
     // Ensure we're on the notes tab
     setActiveTab('notes');
@@ -398,7 +412,7 @@ function App() {
           </div>
           
           <div className="main-content">
-            <NoteViewer 
+            <OptimizedNoteViewer 
               note={selectedNote} 
               loading={noteLoading}
               onNoteContentUpdate={handleNoteContentUpdate}
