@@ -1,12 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { NoteList } from "./components/NoteList";
+import { NewNoteButton, NewNoteButtonRef } from "./components/NewNoteButton";
 import { NoteViewer } from "./components/NoteViewer";
 import { SearchPanel } from "./components/SearchPanel";
 import { TagFilter } from "./components/TagFilter";
 import MobileLayout from "./components/MobileLayout";
 import { AppConfig, Note, NoteSummary, SortOption } from "./types";
+import { useNewNoteShortcut } from "./hooks/useNewNoteShortcut";
 import "./App.css";
 
 /**
@@ -15,6 +17,11 @@ import "./App.css";
  * @returns The main application UI
  */
 function App() {
+  // Ref for the NewNoteButton component
+  const newNoteButtonRef = useRef<NewNoteButtonRef>(null);
+  
+  // Use the custom hook to set up the keyboard shortcut
+  useNewNoteShortcut(newNoteButtonRef);
   // Tab state
   const [activeTab, setActiveTab] = useState<'notes' | 'settings'>('notes');
   // Application state
@@ -320,6 +327,14 @@ function App() {
             
             {activeTab === 'notes' ? (
               <>
+                <div className="note-list-header">
+                  <h2>Notes</h2>
+                  <NewNoteButton 
+                    ref={newNoteButtonRef}
+                    onNoteCreated={handleNoteCreated}
+                    disabled={notesLoading}
+                  />
+                </div>
                 <TagFilter
                   allTags={allTags}
                   selectedTags={selectedTags}

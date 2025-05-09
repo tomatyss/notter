@@ -2,7 +2,6 @@ import React from 'react';
 import { format } from 'date-fns';
 import { NoteSummary, SortOption, Note } from '../types';
 import { SortSelector } from './SortSelector';
-import { NewNoteButton } from './NewNoteButton';
 
 /**
  * Props for the NoteList component
@@ -85,15 +84,9 @@ export const NoteList: React.FC<NoteListProps> = ({
 }) => {
   // Determine which notes to display
   const displayNotes = isFiltering && filteredNotes ? filteredNotes : notes;
+  
   return (
     <div className="note-list">
-      <div className="note-list-header">
-        <h2>Notes</h2>
-        <NewNoteButton 
-          onNoteCreated={onNoteCreated}
-          disabled={loading}
-        />
-      </div>
       <div className="sort-container">
         <SortSelector 
           currentSort={currentSort} 

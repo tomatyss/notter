@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { NoteType, Note, AppConfig } from '../types';
 
@@ -18,15 +18,26 @@ interface NewNoteButtonProps {
 }
 
 /**
+ * Ref interface for the NewNoteButton component
+ */
+export interface NewNoteButtonRef {
+  /**
+   * Opens the new note modal
+   */
+  openModal: () => void;
+}
+
+/**
  * Component for creating a new note
  * 
  * @param props Component props
+ * @param ref Ref object for accessing component methods
  * @returns New note button UI component
  */
-export const NewNoteButton: React.FC<NewNoteButtonProps> = ({ 
+export const NewNoteButton = forwardRef<NewNoteButtonRef, NewNoteButtonProps>(({ 
   onNoteCreated,
   disabled = false
-}) => {
+}, ref) => {
   // State for modal visibility
   const [isModalOpen, setIsModalOpen] = useState(false);
   // State for new note title
@@ -62,6 +73,11 @@ export const NewNoteButton: React.FC<NewNoteButtonProps> = ({
     setFileType(config?.default_note_type || NoteType.Markdown);
     setError(null);
   };
+  
+  // Expose the handleOpenModal function via ref
+  useImperativeHandle(ref, () => ({
+    openModal: handleOpenModal
+  }));
   
   // Close the modal
   const handleCloseModal = () => {
@@ -182,4 +198,4 @@ export const NewNoteButton: React.FC<NewNoteButtonProps> = ({
       )}
     </>
   );
-};
+});
