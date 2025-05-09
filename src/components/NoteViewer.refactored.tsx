@@ -1,27 +1,19 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import ReactMarkdown from 'react-markdown';
-import { format } from 'date-fns';
+import React, { useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { openUrl } from '@tauri-apps/plugin-opener';
-import { Note, NoteType, NoteSummary } from '../types';
-import { FindReplacePanel, FindOptions } from './FindReplacePanel';
+import { Note } from '../types';
+import { FindReplacePanel } from './FindReplacePanel';
 import { 
   useNoteEditing, 
   useFindReplace, 
   useBacklinks, 
   useKeyboardShortcuts 
 } from '../hooks/noteViewerHooks';
-import { 
-  NoteHeader, 
-  NoteContent, 
-  BacklinksSection 
-} from './noteViewer/';
-import { 
-  findTextInContent, 
-  scrollToMatch, 
-  escapeRegExp, 
-  getTextNodesIn 
-} from '../utils/textUtils';
+// Import individual components directly to avoid casing issues
+import { NoteHeader } from './noteViewer/NoteHeader';
+import { NoteContent } from './noteViewer/NoteContent';
+import { BacklinksSection } from './noteViewer/BacklinksSection';
+// No need to import unused utilities
 
 /**
  * Props for the NoteViewer component
@@ -83,12 +75,12 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   
   // Get editing functionality from custom hook
   const {
-    isEditing, setIsEditing,
-    isRenamingTitle, setIsRenamingTitle,
-    isEditingPath, setIsEditingPath,
-    editedContent, setEditedContent,
-    editedTitle, setEditedTitle,
-    editedPath, setEditedPath,
+    isEditing,
+    isRenamingTitle,
+    isEditingPath,
+    editedContent,
+    editedTitle,
+    editedPath,
     isSaving,
     error, setError,
     handleContentChange,
@@ -102,19 +94,15 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
     handlePathBlur,
     handleContentKeyDown,
     handleTitleKeyPress,
-    handlePathKeyPress,
-    saveContent,
-    saveTitle,
-    savePath
+    handlePathKeyPress
   } = useNoteEditing(note, onNoteContentUpdate, onNoteRename, onNotePathChange);
   
   // Get find/replace functionality from custom hook
   const {
     findReplaceVisible, setFindReplaceVisible,
-    matches, setMatches,
-    currentMatchIndex, setCurrentMatchIndex,
-    lastSearchText, setLastSearchText,
-    lastSearchOptions, setLastSearchOptions,
+    matches,
+    currentMatchIndex,
+    lastSearchText,
     handleFindTextInContent,
     handleFindNextMatch,
     handleFindPreviousMatch,
@@ -270,5 +258,4 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   );
 };
 
-// Export sub-components for direct use if needed
-export * from './noteViewer/';
+// No need to re-export components

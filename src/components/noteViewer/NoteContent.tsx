@@ -1,7 +1,7 @@
 import React, { RefObject } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Note, NoteType } from '../../types';
-import { createMatchSegments, TextSegment, noteLinkRegex, urlRegex, isValidUrl, normalizeUrl } from '../../utils/textUtils';
+import { createMatchSegments, noteLinkRegex, urlRegex, isValidUrl, normalizeUrl } from '../../utils/textUtils';
 
 /**
  * Props for the NoteContent component
@@ -109,8 +109,7 @@ export const NoteContent: React.FC<NoteContentProps> = ({
   const renderPlainTextWithLinks = (content: string) => {
     if (!content) return null;
     
-    // Create a copy of the content to work with
-    let processedContent = content;
+    // No need to create a copy of the content
     const parts: React.ReactNode[] = [];
     
     // Step 1: Extract all note links and replace with placeholders

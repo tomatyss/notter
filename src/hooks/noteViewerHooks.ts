@@ -565,7 +565,66 @@ export const scrollToMatch = (
   container: HTMLElement,
   index: number,
   length: number
-) => {
-  // Implementation would go here
-  // This is a placeholder for the actual implementation
+): void => {
+  // Get all text nodes in the container
+  const textNodes = getTextNodesIn(container);
+  let currentIndex = 0;
+  let targetNode = null;
+  let targetOffset = 0;
+  
+  // Find the text node containing the match
+  for (const node of textNodes) {
+    const nodeLength = node.textContent?.length || 0;
+    
+    if (currentIndex + nodeLength > index) {
+      targetNode = node;
+      targetOffset = index - currentIndex;
+      break;
+    }
+    
+    currentIndex += nodeLength;
+  }
+  
+  if (targetNode) {
+    // Create a range to select the match
+    const range = document.createRange();
+    range.setStart(targetNode, targetOffset);
+    range.setEnd(targetNode, targetOffset + length);
+    
+    // Scroll to the range
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(range);
+      
+      // Scroll the match into view
+      const rect = range.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      
+      if (rect.top < containerRect.top || rect.bottom > containerRect.bottom) {
+        container.scrollTo({
+          top: container.scrollTop + (rect.top - containerRect.top) - 100,
+          behavior: 'smooth'
+        });
+      }
+    }
+  }
+};
+
+// Helper function to get all text nodes in an element
+const getTextNodesIn = (node: Node): Text[] => {
+  const textNodes: Text[] = [];
+  const walker = document.createTreeWalker(
+    node,
+    NodeFilter.SHOW_TEXT,
+    null
+  );
+  
+  let currentNode: Node | null = walker.nextNode();
+  while (currentNode) {
+    textNodes.push(currentNode as Text);
+    currentNode = walker.nextNode();
+  }
+  
+  return textNodes;
 };

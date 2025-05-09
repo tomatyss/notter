@@ -633,8 +633,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   const renderPlainTextWithLinks = (content: string) => {
     if (!content) return null;
     
-    // Create a copy of the content to work with
-    let processedContent = content;
+    // No need to create a copy of the content
     const parts = [];
     
     // Step 1: Extract all note links and replace with placeholders
