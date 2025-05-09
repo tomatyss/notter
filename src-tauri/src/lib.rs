@@ -296,6 +296,38 @@ async fn update_note_content(
     Ok(updated_note)
 }
 
+/// Helper function to update backlinks when a note is renamed
+///
+/// # Parameters
+/// * `note_manager` - The note manager instance
+/// * `old_title` - The original title of the note
+/// * `new_title` - The new title of the note
+///
+/// # Returns
+/// Result indicating success or failure
+fn update_backlinks(note_manager: &NoteManager, old_title: &str, new_title: &str) -> Result<(), String> {
+    // Find all notes that link to the old title
+    let backlinks = note_manager.find_backlinks(old_title).map_err(|e| e.to_string())?;
+    
+    // Update each backlink
+    for backlink in backlinks {
+        // Get the full note content
+        let backlink_note = note_manager.get_note(&backlink.id).map_err(|e| e.to_string())?;
+        
+        // Replace [[Old Title]] with [[New Title]] in the content
+        let updated_content = backlink_note.content.replace(
+            &format!("[[{}]]", old_title),
+            &format!("[[{}]]", new_title)
+        );
+        
+        // Save the updated content
+        note_manager.update_note_content(&backlink.id, &updated_content)
+            .map_err(|e| e.to_string())?;
+    }
+    
+    Ok(())
+}
+
 /// Renames a note file
 ///
 /// # Parameters
@@ -321,13 +353,21 @@ async fn rename_note(
         }
     };
 
-    // Get the original note to remove from index
+    // Get the original note to remove from index and to get the old title
     let original_note = note_manager.get_note(&id).map_err(|e| e.to_string())?;
+    let old_title = original_note.title.clone();
 
-    // Rename the note
+    // Rename the note (synchronous operation)
     let updated_note = note_manager
         .rename_note(&id, &new_name)
         .map_err(|e| e.to_string())?;
+    
+    // Update backlinks synchronously
+    if let Err(e) = update_backlinks(&note_manager, &old_title, &updated_note.title) {
+        eprintln!("Error updating backlinks: {}", e);
+        // We don't return an error here because the note rename was successful
+        // The backlinks update is a secondary operation
+    }
 
     // Check if we should update the search index
     let should_update_index = {

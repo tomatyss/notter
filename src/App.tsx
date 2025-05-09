@@ -45,6 +45,7 @@ function App() {
   
   // Error state
   const [error, setError] = useState<string | null>(null);
+  
 
   // Collect all unique tags from notes
   const collectAllTags = useCallback((notesList: NoteSummary[]) => {
@@ -70,6 +71,7 @@ function App() {
       setConfigLoading(false); // Ensure configLoading is set to false even if there's an error
     }
   }, [sortOption, collectAllTags]);
+
 
   // Load initial configuration
   useEffect(() => {
