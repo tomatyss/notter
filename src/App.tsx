@@ -181,10 +181,17 @@ function App() {
   // Load a specific note
   const handleSelectNote = async (id: string) => {
     try {
-      setSelectedNoteId(id);
+      // Set loading state first
       setNoteLoading(true);
+      
+      // Load the note content
       const note = await invoke<Note>('get_note', { id });
+      
+      // Update the selected note ID and note content
+      setSelectedNoteId(id);
       setSelectedNote(note);
+      
+      // Clear loading state
       setNoteLoading(false);
     } catch (err) {
       setError(`Failed to load note: ${err}`);
@@ -195,43 +202,54 @@ function App() {
   // Handle note content update
   const handleNoteContentUpdate = async (id: string, content: string) => {
     try {
-      // Don't set loading state to avoid UI flicker during editing
-      // setNoteLoading(true);
+      // Verify that we're updating the currently selected note
+      if (id !== selectedNoteId) {
+        console.warn('Attempting to update a note that is not currently selected');
+        return;
+      }
       
       // Update note content
       const updatedNote = await invoke<Note>('update_note_content', { id, content });
       
-      // Update the selected note
-      setSelectedNote(updatedNote);
-      
-      // Update the note in the notes list in the background
-      setTimeout(() => {
-        setNotes(prevNotes => 
-          prevNotes.map(note => 
-            note.id === id 
-              ? { 
-                  ...note, 
-                  modified: updatedNote.modified,
-                  tags: updatedNote.tags // Tags might have changed if they were added/removed in the content
-                } 
-              : note
-          )
-        );
-      }, 100);
-      
-      // Don't set loading state to false here to avoid UI flicker
-      // setNoteLoading(false);
+      // Verify that the selected ID hasn't changed during the update
+      if (id === selectedNoteId) {
+        // Update the selected note
+        setSelectedNote(updatedNote);
+        
+        // Update the note in the notes list in the background
+        setTimeout(() => {
+          setNotes(prevNotes => 
+            prevNotes.map(note => 
+              note.id === id 
+                ? { 
+                    ...note, 
+                    modified: updatedNote.modified,
+                    tags: updatedNote.tags // Tags might have changed if they were added/removed in the content
+                  } 
+                : note
+            )
+          );
+        }, 100);
+      }
     } catch (err) {
       setError(`Failed to update note: ${err}`);
-      setNoteLoading(false);
+      // Clear the selected note on error to prevent showing stale data
+      if (id === selectedNoteId) {
+        setNoteLoading(false);
+        // Reload the note to ensure we have the latest version
+        handleSelectNote(id);
+      }
     }
   };
   
   // Handle note rename
   const handleNoteRename = async (id: string, newName: string) => {
     try {
-      // Don't set loading state to avoid UI flicker during rename
-      // setNoteLoading(true);
+      // Verify that we're renaming the currently selected note
+      if (id !== selectedNoteId) {
+        console.warn('Attempting to rename a note that is not currently selected');
+        return;
+      }
       
       // Rename the note
       const updatedNote = await invoke<Note>('rename_note', { id, newName });
@@ -245,20 +263,23 @@ function App() {
       setTimeout(() => {
         loadNotes();
       }, 100);
-      
-      // Don't set loading state to false here to avoid UI flicker
-      // setNoteLoading(false);
     } catch (err) {
       setError(`Failed to rename note: ${err}`);
-      setNoteLoading(false);
+      // Reload the note to ensure we have the latest version
+      if (id === selectedNoteId) {
+        handleSelectNote(id);
+      }
     }
   };
   
   // Handle note path change
   const handleNoteMoveToPath = async (id: string, newPath: string) => {
     try {
-      // Don't set loading state to avoid UI flicker during path change
-      // setNoteLoading(true);
+      // Verify that we're moving the currently selected note
+      if (id !== selectedNoteId) {
+        console.warn('Attempting to move a note that is not currently selected');
+        return;
+      }
       
       // Move the note to the new path
       const updatedNote = await invoke<Note>('move_note', { id, newPath });
@@ -272,12 +293,12 @@ function App() {
       setTimeout(() => {
         loadNotes();
       }, 100);
-      
-      // Don't set loading state to false here to avoid UI flicker
-      // setNoteLoading(false);
     } catch (err) {
       setError(`Failed to move note: ${err}`);
-      setNoteLoading(false);
+      // Reload the note to ensure we have the latest version
+      if (id === selectedNoteId) {
+        handleSelectNote(id);
+      }
     }
   };
   

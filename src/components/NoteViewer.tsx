@@ -881,9 +881,15 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
           <div className="note-title-container">
             <h1 
               className="note-title editable" 
+              onClick={() => {
+                if (!isRenamingTitle && !loading && note) {
+                  setIsRenamingTitle(true);
+                }
+              }}
               onDoubleClick={handleTitleDoubleClick}
               ref={titleRef}
-              title="Double-click to edit"
+              title="Click to edit"
+              style={{ cursor: 'pointer' }}
             >
               {note.title}
             </h1>
@@ -916,9 +922,15 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
           ) : (
             <div 
               className="note-path editable" 
+              onClick={() => {
+                if (!isEditingPath && !loading && note) {
+                  setIsEditingPath(true);
+                }
+              }}
               onDoubleClick={handlePathDoubleClick}
               ref={pathRef}
-              title="Double-click to edit"
+              title="Click to edit"
+              style={{ cursor: 'pointer' }}
             >
               <span className="path-label">Path:</span> {note.path}
             </div>
@@ -952,9 +964,15 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       <div className="note-viewer-content" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
         <div 
           className="note-content" 
+          onClick={() => {
+            if (!isEditing && !loading && note) {
+              setIsEditing(true);
+            }
+          }}
           onDoubleClick={handleContentDoubleClick}
           ref={contentRef}
-          title="Double-click to edit"
+          title="Click to edit"
+          style={{ cursor: 'pointer' }}
         >
           {isEditing ? (
             <div className="editor-container">
