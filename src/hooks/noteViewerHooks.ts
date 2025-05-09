@@ -111,21 +111,21 @@ export const useNoteEditing = (
   
   // Handle double click on content to edit
   const handleContentDoubleClick = () => {
-    if (!isEditing && !note) {
+    if (!isEditing && note) {
       setIsEditing(true);
     }
   };
   
   // Handle double click on title to rename
   const handleTitleDoubleClick = () => {
-    if (!isRenamingTitle && !note) {
+    if (!isRenamingTitle && note) {
       setIsRenamingTitle(true);
     }
   };
   
   // Handle double click on path to edit
   const handlePathDoubleClick = () => {
-    if (!isEditingPath && !note) {
+    if (!isEditingPath && note) {
       setIsEditingPath(true);
     }
   };
