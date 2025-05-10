@@ -120,6 +120,52 @@ export const useNoteEditing = (
       // Set cursor position
       textareaRef.current.focus();
       textareaRef.current.setSelectionRange(clickPosition, clickPosition);
+      
+      // Scroll to the cursor position to ensure it's visible
+      // This is done by creating a range at the cursor position and scrolling it into view
+      const textarea = textareaRef.current;
+      
+      // Use a small delay to ensure the textarea has been properly rendered and sized
+      setTimeout(() => {
+        if (textarea) {
+          // Create a temporary div to calculate the position
+          const tempDiv = document.createElement('div');
+          tempDiv.style.position = 'absolute';
+          tempDiv.style.visibility = 'hidden';
+          tempDiv.style.whiteSpace = 'pre-wrap';
+          tempDiv.style.wordWrap = 'break-word';
+          tempDiv.style.width = getComputedStyle(textarea).width;
+          tempDiv.style.font = getComputedStyle(textarea).font;
+          tempDiv.style.padding = getComputedStyle(textarea).padding;
+          tempDiv.style.lineHeight = getComputedStyle(textarea).lineHeight;
+          
+          // Add the text content up to the cursor position
+          tempDiv.textContent = textarea.value.substring(0, clickPosition);
+          
+          // Add a marker element at the end
+          const marker = document.createElement('span');
+          marker.id = 'cursor-position-marker';
+          tempDiv.appendChild(marker);
+          
+          // Add the div to the document to calculate positions
+          document.body.appendChild(tempDiv);
+          
+          // Get the position of the marker
+          const markerRect = marker.getBoundingClientRect();
+          
+          // Clean up
+          document.body.removeChild(tempDiv);
+          
+          // Scroll the textarea to show the cursor position
+          // We want the cursor to be in the middle of the visible area if possible
+          const textareaRect = textarea.getBoundingClientRect();
+          const scrollTop = markerRect.top - textareaRect.top - textareaRect.height / 2;
+          
+          if (scrollTop > 0) {
+            textarea.scrollTop = scrollTop;
+          }
+        }
+      }, 50);
     }
   }, [isEditing, clickPosition]);
 
