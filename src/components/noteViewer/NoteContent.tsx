@@ -1,7 +1,8 @@
-import React, { RefObject } from 'react';
+import React, { RefObject, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Note, NoteType } from '../../types';
 import { createMatchSegments, noteLinkRegex, urlRegex, isValidUrl, normalizeUrl, getTextNodesIn } from '../../utils/textUtils';
+import { AutoResizeTextarea } from '../common/AutoResizeTextarea';
 
 /**
  * Props for the NoteContent component
@@ -106,6 +107,59 @@ export const NoteContent: React.FC<NoteContentProps> = ({
   onNoteLinkClick,
   onExternalLinkClick
 }) => {
+  // Store the scroll position to maintain it between view/edit mode switches
+  const scrollPositionRef = useRef<number>(0);
+  
+  // Save scroll position when switching modes
+  useEffect(() => {
+    if (contentRef.current) {
+      if (!isEditing) {
+        // When switching to view mode, restore the saved scroll position
+        setTimeout(() => {
+          if (contentRef.current) {
+            contentRef.current.scrollTop = scrollPositionRef.current;
+          }
+        }, 50);
+      }
+    }
+  }, [isEditing]);
+  
+  // Custom onBlur handler to preserve scroll position
+  const handleBlur = () => {
+    // Save the current scroll position before switching modes
+    if (contentRef.current) {
+      scrollPositionRef.current = contentRef.current.scrollTop;
+    }
+    // Call the original onBlur handler
+    onContentBlur();
+  };
+  
+  // Custom key down handler to preserve scroll position
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Check for Ctrl+Enter or Cmd+Enter to save and exit, or Escape to cancel
+    if ((e.key === 'Enter' && (e.ctrlKey || e.metaKey)) || e.key === 'Escape') {
+      // Save the current scroll position before switching modes
+      if (contentRef.current) {
+        scrollPositionRef.current = contentRef.current.scrollTop;
+      }
+    }
+    
+    // Call the original onKeyDown handler
+    onContentKeyDown(e);
+  };
+  
+  // Custom double click handler to preserve scroll position
+  const handleDoubleClickWithScroll = (e: React.MouseEvent) => {
+    if (!isEditing && note) {
+      // Save the current scroll position before switching to edit mode
+      if (contentRef.current) {
+        scrollPositionRef.current = contentRef.current.scrollTop;
+      }
+      
+      const position = calculateTextPosition(e);
+      onContentDoubleClick(position);
+    }
+  };
   /**
    * Render plain text with note links and external URLs
    * 
@@ -347,23 +401,23 @@ export const NoteContent: React.FC<NoteContentProps> = ({
   return (
     <div 
       className="note-content" 
-      onDoubleClick={handleDoubleClick}
+      onDoubleClick={handleDoubleClickWithScroll}
       ref={contentRef}
       title="Double-click to edit"
     >
       {isEditing ? (
-        <div className="editor-container">
-          <textarea
+        <>
+          <AutoResizeTextarea
             ref={textareaRef}
             value={editedContent}
             onChange={onContentChange}
-            onBlur={onContentBlur}
-            onKeyDown={onContentKeyDown}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
             className="content-editor"
             autoFocus
           />
           {isSaving && <span className="autosave-indicator">Saving...</span>}
-        </div>
+        </>
       ) : note.file_type === NoteType.Markdown ? (
         <div className="markdown-content editable">
           <MarkdownWithLinks content={note.content} />

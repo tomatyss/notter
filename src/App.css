@@ -1123,6 +1123,8 @@ body {
   height: 100%;
   position: relative;
   overflow-y: auto;
+  box-sizing: border-box;
+  display: block;
 }
 
 .editor-container::after {
@@ -1144,6 +1146,8 @@ body {
   flex: 1;
   overflow: auto;
   line-height: 1.6;
+  display: flex;
+  flex-direction: column;
 }
 
 .note-content h1,
@@ -1591,6 +1595,27 @@ body {
     background-color: #3a5ce7;
     border-color: #2a4cd7;
   }
+}
+
+/* Auto-resize Textarea */
+.auto-resize-textarea {
+  border: none;
+  outline: none;
+  height: auto;
+  resize: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 1rem;
+  line-height: 1.5;
+  overflow-y: auto; /* Enable scrollbar when needed */
+  background-color: inherit;
+  color: inherit;
+  max-height: calc(100vh - 200px); /* Limit height to prevent excessive growth */
 }
 
 /* Notifications */
