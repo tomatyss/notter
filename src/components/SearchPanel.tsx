@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { SearchResult } from '../types';
 import { debounce } from 'lodash';
+import { Icon, IconName } from '../components/common';
 
 /**
  * Props for the SearchPanel component
@@ -127,10 +128,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
               onClick={handleClearSearch}
               aria-label="Clear search"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
+              <Icon name={IconName.Close} title="Clear search" />
             </button>
           )}
           {searching && <div className="search-spinner"></div>}

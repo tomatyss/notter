@@ -30,7 +30,7 @@ interface NoteContentProps {
   /**
    * Reference to the content element
    */
-  contentRef: RefObject<HTMLDivElement>;
+  contentRef: RefObject<HTMLDivElement | null>;
   
   /**
    * Array of match positions for search
@@ -70,7 +70,7 @@ interface NoteContentProps {
   /**
    * Reference to the textarea element
    */
-  textareaRef?: RefObject<HTMLTextAreaElement>;
+  textareaRef?: RefObject<HTMLTextAreaElement | null>;
   
   /**
    * Callback when a note link is clicked

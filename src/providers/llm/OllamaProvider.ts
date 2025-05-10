@@ -1,5 +1,56 @@
-import { Ollama } from 'ollama';
-import { LLMProvider, ChatMessage, generateId } from './types';
+// Import the browser-compatible version of Ollama
+import { LLMProvider, ChatMessage } from './types';
+
+// Define a minimal interface for the Ollama client
+interface OllamaClient {
+  list(): Promise<{ models: { name: string }[] }>;
+  chat(params: { model: string; messages: { role: string; content: string }[] }): Promise<{ message: { content: string } }>;
+}
+
+// Create a browser-compatible Ollama client
+class BrowserOllamaClient implements OllamaClient {
+  private host: string;
+
+  constructor(host: string) {
+    this.host = host;
+  }
+
+  async list(): Promise<{ models: { name: string }[] }> {
+    try {
+      const response = await fetch(`${this.host}/api/tags`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return { models: data.models || [] };
+    } catch (error) {
+      console.error('Failed to fetch Ollama models:', error);
+      return { models: [] };
+    }
+  }
+
+  async chat(params: { model: string; messages: { role: string; content: string }[] }): Promise<{ message: { content: string } }> {
+    try {
+      const response = await fetch(`${this.host}/api/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return { message: { content: data.message?.content || '' } };
+    } catch (error) {
+      console.error('Error sending message to Ollama:', error);
+      throw new Error(`Failed to communicate with Ollama: ${error}`);
+    }
+  }
+}
 
 /**
  * Ollama LLM provider implementation
@@ -19,7 +70,7 @@ export class OllamaProvider implements LLMProvider {
   /**
    * Custom Ollama client instance
    */
-  private ollamaClient: Ollama;
+  private ollamaClient: OllamaClient;
   
   /**
    * Creates a new OllamaProvider instance
@@ -27,8 +78,8 @@ export class OllamaProvider implements LLMProvider {
    * @param host - The host URL for the Ollama API (default: http://127.0.0.1:11434)
    */
   constructor(host = 'http://127.0.0.1:11434') {
-    // Create a custom Ollama instance with the specified host
-    this.ollamaClient = new Ollama({ host });
+    // Create a browser-compatible Ollama client
+    this.ollamaClient = new BrowserOllamaClient(host);
   }
   
   /**

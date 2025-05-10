@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useChat } from '../../hooks/useChat';
 import { ChatMessage } from '../../providers/llm/types';
-import { defaultProviderRegistry } from '../../providers/llm/ProviderRegistry';
-import { defaultToolRegistry } from '../../tools';
+import { Icon, IconName } from '../../components/common';
 import './ChatPanel.css';
 
 /**
@@ -201,7 +200,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             )}
           </select>
         </div>
-        <button onClick={onClose} className="close-button">×</button>
+        <button onClick={onClose} className="close-button" title="Close chat">
+          <Icon name={IconName.Close} title="Close chat" />
+        </button>
       </div>
       
       <div className="chat-messages">

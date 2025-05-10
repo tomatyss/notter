@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Icon, IconName } from '../components/common';
 
 /**
  * Props for the TagFilter component
@@ -82,7 +83,11 @@ export const TagFilter: React.FC<TagFilterProps> = ({
       <div className="tag-filter-header" onClick={toggleExpanded}>
         <h3>
           <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>
-            {isExpanded ? '▼' : '►'}
+            {isExpanded ? (
+              <Icon name={IconName.ChevronDown} title="Collapse tag filter" />
+            ) : (
+              <Icon name={IconName.ChevronRight} title="Expand tag filter" />
+            )}
           </span>
           Filter by Tags {selectedTags.length > 0 && `(${selectedTags.length})`}
         </h3>
