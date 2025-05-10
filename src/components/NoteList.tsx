@@ -72,7 +72,6 @@ interface NoteListProps {
 export const NoteList: React.FC<NoteListProps> = ({ 
   notes, 
   onSelectNote, 
-  onNoteCreated,
   selectedNoteId,
   loading,
   currentSort,
