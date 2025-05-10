@@ -367,53 +367,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       <h2>Settings</h2>
       
       <div className="settings-content">
-        <div className="setting-section">
-          <h3>API Keys</h3>
-          <p className="section-description">
-            API keys are required for some LLM providers. Keys are stored securely in your browser's local storage.
-          </p>
-          
-          <div className="api-key-settings">
-            <div className="api-key-item">
-              <div className="api-key-header">
-                <label htmlFor="gemini-api-key">Google Gemini API Key</label>
-                <div className="api-key-status">
-                  <span className={geminiApiKey ? "status-indicator active" : "status-indicator inactive"}></span>
-                  <span className="status-text">{geminiApiKey ? "Active" : "Not configured"}</span>
-                </div>
-              </div>
-              
-              <div className="api-key-input-container">
-                <input 
-                  id="gemini-api-key"
-                  type="password"
-                  value={geminiApiKey}
-                  onChange={(e) => setGeminiApiKey(e.target.value)}
-                  placeholder="Enter your Gemini API key"
-                  className="api-key-input"
-                />
-                <button 
-                  onClick={handleSaveGeminiApiKey}
-                  disabled={loading || savingGeminiApiKey}
-                  className="save-api-key-btn"
-                >
-                  {savingGeminiApiKey ? 'Saving...' : 'Save Key'}
-                </button>
-              </div>
-              
-              <div className="api-key-help">
-                <span className="help-icon">ℹ️</span>
-                <span className="help-text">
-                  Get your API key from the <a href="https://ai.google.dev/tutorials/setup" target="_blank" rel="noopener noreferrer">Google AI Studio</a>
-                </span>
-              </div>
-              
-              {geminiApiKeyError && <div className="error-message">{geminiApiKeyError}</div>}
-              {geminiApiKeySuccess && <div className="success-message">API key saved successfully!</div>}
-            </div>
-          </div>
-        </div>
-        
         <div className="setting-item">
           <h3>Notes Directory</h3>
           <div className="folder-selector">
@@ -426,7 +379,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <button 
               onClick={handleSelectFolder}
               disabled={loading || selectingFolder}
-              className="select-folder-btn"
+              className="settings-btn"
             >
               {loading ? 'Loading...' : selectingFolder ? 'Selecting...' : 'Select Folder'}
             </button>
@@ -446,7 +399,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <button 
               onClick={handleSavePattern}
               disabled={loading || savingPattern}
-              className="save-pattern-btn"
+              className="settings-btn"
             >
               {savingPattern ? 'Saving...' : 'Save Pattern'}
             </button>
@@ -472,7 +425,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <button 
               onClick={handleSaveDefaultNoteType}
               disabled={loading || savingNoteType}
-              className="save-pattern-btn"
+              className="settings-btn"
             >
               {savingNoteType ? 'Saving...' : 'Save Default'}
             </button>
@@ -490,7 +443,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <button 
               onClick={handleRebuildIndex}
               disabled={loading || !config?.notes_dir || rebuildingIndex}
-              className="rebuild-index-btn"
+              className="settings-btn"
             >
               {rebuildingIndex ? 'Rebuilding...' : 'Rebuild Search Index'}
             </button>
@@ -552,7 +505,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       <button 
                         onClick={handleUpdateIntervalChange}
                         disabled={loading || savingUpdateInterval || !autoUpdateIndex}
-                        className="save-interval-btn"
+                        className="settings-btn"
                       >
                         {savingUpdateInterval ? 'Saving...' : 'Save'}
                       </button>
@@ -564,6 +517,54 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 )}
               </>
             )}
+          </div>
+        </div>
+        
+        {/* API Keys section moved to the bottom */}
+        <div className="setting-section">
+          <h3>API Keys</h3>
+          <p className="section-description">
+            API keys are required for some LLM providers. Keys are stored securely in your browser's local storage.
+          </p>
+          
+          <div className="api-key-settings">
+            <div className="api-key-item">
+              <div className="api-key-header">
+                <label htmlFor="gemini-api-key">Google Gemini API Key</label>
+                <div className="api-key-status">
+                  <span className={geminiApiKey ? "status-indicator active" : "status-indicator inactive"}></span>
+                  <span className="status-text">{geminiApiKey ? "Active" : "Not configured"}</span>
+                </div>
+              </div>
+              
+              <div className="api-key-input-container">
+                <input 
+                  id="gemini-api-key"
+                  type="password"
+                  value={geminiApiKey}
+                  onChange={(e) => setGeminiApiKey(e.target.value)}
+                  placeholder="Enter your Gemini API key"
+                  className="api-key-input"
+                />
+                <button 
+                  onClick={handleSaveGeminiApiKey}
+                  disabled={loading || savingGeminiApiKey}
+                  className="settings-btn"
+                >
+                  {savingGeminiApiKey ? 'Saving...' : 'Save Key'}
+                </button>
+              </div>
+              
+              <div className="api-key-help">
+                <span className="help-icon">ℹ️</span>
+                <span className="help-text">
+                  Get your API key from the <a href="https://ai.google.dev/tutorials/setup" target="_blank" rel="noopener noreferrer">Google AI Studio</a>
+                </span>
+              </div>
+              
+              {geminiApiKeyError && <div className="error-message">{geminiApiKeyError}</div>}
+              {geminiApiKeySuccess && <div className="success-message">API key saved successfully!</div>}
+            </div>
           </div>
         </div>
       </div>
