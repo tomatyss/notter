@@ -8,6 +8,7 @@ export * from './types';
 
 // Export provider implementations
 export * from './OllamaProvider';
+export * from './GeminiProvider';
 
 // Export provider registry
 export * from './ProviderRegistry';

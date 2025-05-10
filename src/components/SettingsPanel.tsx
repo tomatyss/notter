@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 import { AppConfig, NoteType, AutoUpdateMode } from '../types';
+import { defaultProviderRegistry } from '../providers/llm/ProviderRegistry';
+import './SettingsPanel.css';
 
 /**
  * Props for the SettingsPanel component
@@ -54,6 +56,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const [autoUpdateError, setAutoUpdateError] = useState<string | null>(null);
   const [autoUpdateSuccess, setAutoUpdateSuccess] = useState(false);
   
+  // API key settings
+  const [geminiApiKey, setGeminiApiKey] = useState<string>('');
+  const [savingGeminiApiKey, setSavingGeminiApiKey] = useState(false);
+  const [geminiApiKeyError, setGeminiApiKeyError] = useState<string | null>(null);
+  const [geminiApiKeySuccess, setGeminiApiKeySuccess] = useState(false);
+  
   const [updateMode, setUpdateMode] = useState<AutoUpdateMode>(AutoUpdateMode.Incremental);
   const [savingUpdateMode, setSavingUpdateMode] = useState(false);
   const [updateModeError, setUpdateModeError] = useState<string | null>(null);
@@ -84,6 +92,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       setUpdateMode(config.auto_update_mode);
       setUpdateInterval(config.auto_update_interval);
     }
+    
+    // Initialize API key settings
+    const savedGeminiApiKey = localStorage.getItem('gemini_api_key') || '';
+    setGeminiApiKey(savedGeminiApiKey);
   }, [config]);
 
   /**
@@ -319,14 +331,91 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       setSavingUpdateInterval(false);
     }
   };
+  
+  /**
+   * Handles saving the Gemini API key
+   * Stores the key in localStorage and refreshes providers
+   */
+  const handleSaveGeminiApiKey = () => {
+    try {
+      setSavingGeminiApiKey(true);
+      setGeminiApiKeyError(null);
+      setGeminiApiKeySuccess(false);
+      
+      // Store API key in localStorage
+      localStorage.setItem('gemini_api_key', geminiApiKey);
+      
+      // Refresh providers to register the Gemini provider with the new API key
+      defaultProviderRegistry.refreshProviders();
+      
+      setGeminiApiKeySuccess(true);
+      setSavingGeminiApiKey(false);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setGeminiApiKeySuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Failed to save Gemini API key:', error);
+      setGeminiApiKeyError(`Failed to save API key: ${error}`);
+      setSavingGeminiApiKey(false);
+    }
+  };
 
   return (
     <div className="settings-panel settings-tab">
       <h2>Settings</h2>
       
       <div className="settings-content">
+        <div className="setting-section">
+          <h3>API Keys</h3>
+          <p className="section-description">
+            API keys are required for some LLM providers. Keys are stored securely in your browser's local storage.
+          </p>
+          
+          <div className="api-key-settings">
+            <div className="api-key-item">
+              <div className="api-key-header">
+                <label htmlFor="gemini-api-key">Google Gemini API Key</label>
+                <div className="api-key-status">
+                  <span className={geminiApiKey ? "status-indicator active" : "status-indicator inactive"}></span>
+                  <span className="status-text">{geminiApiKey ? "Active" : "Not configured"}</span>
+                </div>
+              </div>
+              
+              <div className="api-key-input-container">
+                <input 
+                  id="gemini-api-key"
+                  type="password"
+                  value={geminiApiKey}
+                  onChange={(e) => setGeminiApiKey(e.target.value)}
+                  placeholder="Enter your Gemini API key"
+                  className="api-key-input"
+                />
+                <button 
+                  onClick={handleSaveGeminiApiKey}
+                  disabled={loading || savingGeminiApiKey}
+                  className="save-api-key-btn"
+                >
+                  {savingGeminiApiKey ? 'Saving...' : 'Save Key'}
+                </button>
+              </div>
+              
+              <div className="api-key-help">
+                <span className="help-icon">ℹ️</span>
+                <span className="help-text">
+                  Get your API key from the <a href="https://ai.google.dev/tutorials/setup" target="_blank" rel="noopener noreferrer">Google AI Studio</a>
+                </span>
+              </div>
+              
+              {geminiApiKeyError && <div className="error-message">{geminiApiKeyError}</div>}
+              {geminiApiKeySuccess && <div className="success-message">API key saved successfully!</div>}
+            </div>
+          </div>
+        </div>
+        
         <div className="setting-item">
-          <label>Notes Directory</label>
+          <h3>Notes Directory</h3>
           <div className="folder-selector">
             <input 
               type="text" 
