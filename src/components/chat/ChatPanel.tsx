@@ -185,20 +185,33 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     <div className="chat-panel">
       <div className="chat-header">
         <h3>Chat</h3>
-        <div className="model-selector">
-          <select 
-            value={chat.selectedModel} 
-            onChange={e => chat.changeModel(e.target.value)}
-            disabled={chat.isLoading || chat.availableModels.length === 0}
-          >
-            {chat.availableModels.length === 0 ? (
-              <option value="">Loading models...</option>
-            ) : (
-              chat.availableModels.map(model => (
-                <option key={model} value={model}>{model}</option>
-              ))
-            )}
-          </select>
+        <div className="provider-model-selectors">
+          <div className="provider-selector">
+            <select 
+              value={chat.selectedProviderId} 
+              onChange={e => chat.changeProvider(e.target.value)}
+              disabled={chat.isLoading}
+            >
+              {chat.availableProviders.map(provider => (
+                <option key={provider.id} value={provider.id}>{provider.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="model-selector">
+            <select 
+              value={chat.selectedModel} 
+              onChange={e => chat.changeModel(e.target.value)}
+              disabled={chat.isLoading || chat.availableModels.length === 0}
+            >
+              {chat.availableModels.length === 0 ? (
+                <option value="">Loading models...</option>
+              ) : (
+                chat.availableModels.map(model => (
+                  <option key={model} value={model}>{model}</option>
+                ))
+              )}
+            </select>
+          </div>
         </div>
         <button onClick={onClose} className="close-button" title="Close chat">
           <Icon name={IconName.Close} title="Close chat" />

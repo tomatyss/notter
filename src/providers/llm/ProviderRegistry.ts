@@ -1,5 +1,6 @@
 import { LLMProvider } from './types';
 import { OllamaProvider } from './OllamaProvider';
+import { GeminiProvider } from './GeminiProvider';
 
 /**
  * Registry for LLM providers
@@ -25,15 +26,32 @@ export class ProviderRegistry {
   
   /**
    * Initialize default providers
-   * Currently only includes Ollama
+   * Includes Ollama and Gemini (if API key is available)
    */
   private initializeDefaultProviders(): void {
     // Add Ollama provider
     const ollamaProvider = new OllamaProvider();
     this.registerProvider(ollamaProvider);
     
-    // Additional providers can be added here in the future
-    // e.g., Anthropic, Gemini, etc.
+    // Add Gemini provider (if API key is available)
+    const geminiApiKey = localStorage.getItem('gemini_api_key');
+    if (geminiApiKey) {
+      const geminiProvider = new GeminiProvider(geminiApiKey);
+      this.registerProvider(geminiProvider);
+    }
+  }
+  
+  /**
+   * Refresh providers
+   * Clears existing providers and re-initializes them
+   * Useful when API keys change
+   */
+  public refreshProviders(): void {
+    // Clear existing providers
+    this.providers.clear();
+    
+    // Re-initialize providers
+    this.initializeDefaultProviders();
   }
   
   /**

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { ChatMessage, generateId } from '../providers/llm/types';
+import { ChatMessage, generateId, LLMProvider } from '../providers/llm/types';
 import { defaultProviderRegistry } from '../providers/llm/ProviderRegistry';
 import { defaultToolRegistry } from '../tools';
 import { chatToMarkdown, markdownToChat } from '../utils/chat';
@@ -36,6 +36,11 @@ interface ChatState {
   availableModels: string[];
   
   /**
+   * Array of available providers
+   */
+  availableProviders: LLMProvider[];
+  
+  /**
    * Error message, if any
    */
   error: string | null;
@@ -55,8 +60,18 @@ export function useChat(initialProviderId = 'ollama') {
     selectedProviderId: initialProviderId,
     selectedModel: '',
     availableModels: [],
+    availableProviders: defaultProviderRegistry.getAvailableProviders(),
     error: null
   });
+  
+  // Refresh available providers
+  useEffect(() => {
+    // Update available providers
+    setState(prev => ({
+      ...prev,
+      availableProviders: defaultProviderRegistry.getAvailableProviders()
+    }));
+  }, []);
   
   // Load available models when the provider changes
   useEffect(() => {
@@ -292,6 +307,7 @@ export function useChat(initialProviderId = 'ollama') {
     selectedProviderId: state.selectedProviderId,
     selectedModel: state.selectedModel,
     availableModels: state.availableModels,
+    availableProviders: state.availableProviders,
     error: state.error,
     
     // Actions
