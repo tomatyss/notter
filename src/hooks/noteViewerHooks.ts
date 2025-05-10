@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, RefObject, MutableRefObject } from 'react';
+import { useState, useEffect, useRef, useCallback, RefObject } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Note, NoteSummary } from '../types';
 
