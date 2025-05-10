@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useChat } from '../../hooks/useChat';
 import { ChatMessage } from '../../providers/llm/types';
-import { defaultProviderRegistry } from '../../providers/llm/ProviderRegistry';
-import { defaultToolRegistry } from '../../tools';
 import { Icon, IconName } from '../../components/common';
 import './ChatPanel.css';
 
