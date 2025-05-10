@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { NoteType, Note, AppConfig } from '../types';
+import { Icon, IconName } from '../components/common';
 
 /**
  * Props for the NewNoteButton component
@@ -136,10 +137,7 @@ export const NewNoteButton = forwardRef<NewNoteButtonRef, NewNoteButtonProps>(({
         disabled={disabled}
         title="Create a new note"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
+        <Icon name={IconName.Plus} title="Create a new note" />
       </button>
       
       {isModalOpen && (

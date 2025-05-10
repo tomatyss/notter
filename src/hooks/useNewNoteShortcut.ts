@@ -6,7 +6,7 @@ import { NewNoteButtonRef } from '../components/NewNoteButton';
  * 
  * @param newNoteButtonRef Reference to the NewNoteButton component
  */
-export const useNewNoteShortcut = (newNoteButtonRef: React.RefObject<NewNoteButtonRef>) => {
+export const useNewNoteShortcut = (newNoteButtonRef: React.RefObject<NewNoteButtonRef | null>) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Check for Ctrl+N or Cmd+N

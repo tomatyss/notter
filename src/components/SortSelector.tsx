@@ -1,5 +1,6 @@
 import React from 'react';
 import { SortOption } from '../types';
+import { Icon, IconName } from '../components/common';
 
 /**
  * Props for the SortSelector component
@@ -29,13 +30,7 @@ export const SortSelector: React.FC<SortSelectorProps> = ({
   return (
     <div className="sort-selector">
       <div className="sort-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M11 5h10"></path>
-          <path d="M11 9h7"></path>
-          <path d="M11 13h4"></path>
-          <path d="M3 17l3 3 3-3"></path>
-          <path d="M6 5v15"></path>
-        </svg>
+        <Icon name={IconName.Sort} title="Sort options" />
       </div>
       <label htmlFor="sort-select">Sort by:</label>
       <select 
