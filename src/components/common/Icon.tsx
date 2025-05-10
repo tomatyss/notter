@@ -1,4 +1,5 @@
 import React from 'react';
+import './Icon.css';
 
 /**
  * Available icon names in the application

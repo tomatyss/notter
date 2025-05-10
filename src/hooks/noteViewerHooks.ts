@@ -331,7 +331,7 @@ export const useNoteEditing = (
  */
 export const useFindReplace = (
   note: Note | null,
-  contentRef: RefObject<HTMLDivElement>,
+  contentRef: RefObject<HTMLDivElement | null>,
   isEditing: boolean
 ) => {
   // Find and replace state
