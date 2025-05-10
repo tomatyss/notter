@@ -1,0 +1,80 @@
+import { LLMProvider } from './types';
+import { OllamaProvider } from './OllamaProvider';
+
+/**
+ * Registry for LLM providers
+ * Manages the available LLM providers and allows retrieving them by ID
+ */
+export class ProviderRegistry {
+  /**
+   * Map of provider IDs to provider instances
+   */
+  private providers = new Map<string, LLMProvider>();
+  
+  /**
+   * Creates a new ProviderRegistry instance
+   * Initializes with default providers if specified
+   * 
+   * @param initializeDefaults - Whether to initialize with default providers (default: true)
+   */
+  constructor(initializeDefaults = true) {
+    if (initializeDefaults) {
+      this.initializeDefaultProviders();
+    }
+  }
+  
+  /**
+   * Initialize default providers
+   * Currently only includes Ollama
+   */
+  private initializeDefaultProviders(): void {
+    // Add Ollama provider
+    const ollamaProvider = new OllamaProvider();
+    this.registerProvider(ollamaProvider);
+    
+    // Additional providers can be added here in the future
+    // e.g., Anthropic, Gemini, etc.
+  }
+  
+  /**
+   * Register a provider with the registry
+   * 
+   * @param provider - The provider to register
+   */
+  registerProvider(provider: LLMProvider): void {
+    this.providers.set(provider.id, provider);
+  }
+  
+  /**
+   * Get a provider by ID
+   * 
+   * @param id - The ID of the provider to retrieve
+   * @returns The provider instance, or undefined if not found
+   */
+  getProvider(id: string): LLMProvider | undefined {
+    return this.providers.get(id);
+  }
+  
+  /**
+   * Get all available providers
+   * 
+   * @returns Array of all registered providers
+   */
+  getAvailableProviders(): LLMProvider[] {
+    return Array.from(this.providers.values());
+  }
+  
+  /**
+   * Get the IDs of all available providers
+   * 
+   * @returns Array of provider IDs
+   */
+  getAvailableProviderIds(): string[] {
+    return Array.from(this.providers.keys());
+  }
+}
+
+/**
+ * Create and export a default provider registry instance
+ */
+export const defaultProviderRegistry = new ProviderRegistry();

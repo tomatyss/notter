@@ -6,6 +6,7 @@ import { NewNoteButton, NewNoteButtonRef } from "./components/NewNoteButton";
 import { OptimizedNoteViewer } from "./components/OptimizedNoteViewer";
 import { SearchPanel } from "./components/SearchPanel";
 import { TagFilter } from "./components/TagFilter";
+import { ChatPanel } from "./components/chat";
 import MobileLayout from "./components/MobileLayout";
 import { AppConfig, Note, NoteSummary, SortOption } from "./types";
 import { useNewNoteShortcut } from "./hooks/useNewNoteShortcut";
@@ -26,6 +27,9 @@ function App() {
   
   // Tab state
   const [activeTab, setActiveTab] = useState<'notes' | 'settings'>('notes');
+  
+  // Chat state
+  const [isChatVisible, setIsChatVisible] = useState<boolean>(false);
   
   // Application state
   const [config, setConfig] = useState<AppConfig | null>(null);
@@ -421,7 +425,50 @@ function App() {
               onTagClick={handleTagClick}
               onSelectNote={handleSelectNote}
             />
+            
+            {/* Chat toggle button */}
+            <button 
+              className="chat-toggle-button"
+              onClick={() => setIsChatVisible(!isChatVisible)}
+              title={isChatVisible ? "Hide chat" : "Show chat"}
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="20" 
+                height="20" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                {isChatVisible ? (
+                  // X icon for close
+                  <>
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </>
+                ) : (
+                  // Chat icon for open
+                  <>
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                  </>
+                )}
+              </svg>
+            </button>
           </div>
+          
+          {/* Chat sidebar */}
+          {isChatVisible && (
+            <div className="chat-sidebar">
+              <ChatPanel 
+                isVisible={isChatVisible}
+                onClose={() => setIsChatVisible(false)}
+                currentNote={selectedNote}
+              />
+            </div>
+          )}
         </main>
         
         {error && (
