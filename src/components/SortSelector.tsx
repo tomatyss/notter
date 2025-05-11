@@ -29,9 +29,6 @@ export const SortSelector: React.FC<SortSelectorProps> = ({
 }) => {
   return (
     <div className="sort-selector">
-      <div className="sort-icon">
-        <Icon name={IconName.Sort} title="Sort options" />
-      </div>
       <label htmlFor="sort-select">Sort by:</label>
       <select 
         id="sort-select"
