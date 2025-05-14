@@ -388,15 +388,6 @@ export const NoteContent: React.FC<NoteContentProps> = ({
     return totalOffset;
   };
   
-  /**
-   * Handle double click with position calculation
-   */
-  const handleDoubleClick = (e: React.MouseEvent) => {
-    if (!isEditing && note) {
-      const position = calculateTextPosition(e);
-      onContentDoubleClick(position);
-    }
-  };
 
   return (
     <div 

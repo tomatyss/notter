@@ -1,6 +1,5 @@
 import React from 'react';
 import { SortOption } from '../types';
-import { Icon, IconName } from '../components/common';
 
 /**
  * Props for the SortSelector component
