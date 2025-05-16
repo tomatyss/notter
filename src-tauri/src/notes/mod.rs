@@ -394,14 +394,37 @@ impl NoteManager {
         // Create the new path with the new name and same extension
         let new_path = parent_dir.join(format!("{}.{}", new_name, extension));
         
-        // Check if the new path already exists
-        if new_path.exists() {
+        // Get the current filename without extension
+        let current_name = current_path.file_stem()
+            .and_then(|stem| stem.to_str())
+            .unwrap_or("");
+        
+        // Check if the only difference is case (case-insensitive comparison)
+        let case_only_difference = current_name.to_lowercase() == new_name.to_lowercase() && current_name != new_name;
+        
+        // Check if the new path already exists and it's not just a case difference
+        if new_path.exists() && !case_only_difference {
             anyhow::bail!("A file with this name already exists");
         }
         
-        // Rename the file
-        fs::rename(&current_path, &new_path)
-            .context("Failed to rename note file")?;
+        // If it's only a case difference, use a two-step rename process
+        if case_only_difference {
+            // Create a temporary path with a unique name
+            let timestamp = chrono::Utc::now().timestamp();
+            let temp_path = parent_dir.join(format!("temp_rename_{}_{}.{}", timestamp, new_name, extension));
+            
+            // Step 1: Rename to temporary path
+            fs::rename(&current_path, &temp_path)
+                .context("Failed to rename note file to temporary path")?;
+            
+            // Step 2: Rename from temporary path to new path
+            fs::rename(&temp_path, &new_path)
+                .context("Failed to rename note file from temporary path")?;
+        } else {
+            // Regular rename for non-case-only changes
+            fs::rename(&current_path, &new_path)
+                .context("Failed to rename note file")?;
+        }
         
         // Return the updated note
         self.read_note(&new_path)
@@ -428,14 +451,39 @@ impl NoteManager {
                 .context("Failed to create parent directories")?;
         }
         
-        // Check if the new path already exists
-        if new_path.exists() {
+        // Check if the paths are the same except for case
+        let case_only_difference = current_path.to_string_lossy().to_lowercase() == 
+                                  new_path.to_string_lossy().to_lowercase() && 
+                                  current_path != new_path;
+        
+        // Check if the new path already exists and it's not just a case difference
+        if new_path.exists() && !case_only_difference {
             anyhow::bail!("A file already exists at the target path");
         }
         
-        // Move the file
-        fs::rename(&current_path, &new_path)
-            .context("Failed to move note file")?;
+        // If it's only a case difference, use a two-step move process
+        if case_only_difference {
+            // Create a temporary path with a unique name
+            let timestamp = chrono::Utc::now().timestamp();
+            let file_name = new_path.file_name()
+                .and_then(|name| name.to_str())
+                .unwrap_or("note");
+            let parent_dir = new_path.parent()
+                .unwrap_or_else(|| Path::new(""));
+            let temp_path = parent_dir.join(format!("temp_move_{}_{}", timestamp, file_name));
+            
+            // Step 1: Move to temporary path
+            fs::rename(&current_path, &temp_path)
+                .context("Failed to move note file to temporary path")?;
+            
+            // Step 2: Move from temporary path to new path
+            fs::rename(&temp_path, &new_path)
+                .context("Failed to move note file from temporary path")?;
+        } else {
+            // Regular move for non-case-only changes
+            fs::rename(&current_path, &new_path)
+                .context("Failed to move note file")?;
+        }
         
         // Return the updated note
         self.read_note(&new_path)
