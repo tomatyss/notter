@@ -443,7 +443,25 @@ impl NoteManager {
         let current_path = self.get_note_path(id)?;
         
         // Create the new absolute path
-        let new_path = self.notes_dir.join(new_relative_path);
+        let mut new_path = self.notes_dir.join(new_relative_path);
+
+        // Prevent directory traversal by normalizing the path and ensuring it remains inside notes_dir
+        let mut normalized = PathBuf::new();
+        for comp in Path::new(new_relative_path).components() {
+            match comp {
+                std::path::Component::ParentDir => {
+                    anyhow::bail!("Invalid target path");
+                }
+                std::path::Component::CurDir => {}
+                other => normalized.push(other.as_os_str()),
+            }
+        }
+        new_path = self.notes_dir.join(normalized);
+
+        // Ensure the resulting path is still within the notes directory
+        if !new_path.starts_with(&self.notes_dir) {
+            anyhow::bail!("Target path is outside notes directory");
+        }
         
         // Ensure the parent directory exists
         if let Some(parent) = new_path.parent() {
