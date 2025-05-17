@@ -150,6 +150,12 @@ npm run tauri build
 
 This will create platform-specific packages in the `src-tauri/target/release` directory.
 
+### Releases
+
+Notter uses GitHub Actions to automate the build and release process. When a new tag is pushed to the repository, the workflow automatically builds the application for Windows, macOS, and Linux, and creates a GitHub release with the built artifacts.
+
+For detailed instructions on creating new releases, see the [Release Guide](docs/release-guide.md).
+
 ### iOS Development
 
 To build and run the application on iOS:
