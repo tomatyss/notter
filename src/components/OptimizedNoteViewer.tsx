@@ -94,7 +94,9 @@ export const OptimizedNoteViewer: React.FC<OptimizedNoteViewerProps> = ({
     handlePathBlur,
     handleContentKeyDown,
     handleTitleKeyPress,
-    handlePathKeyPress
+    handlePathKeyPress,
+    setEditedContent,
+    saveContent
   } = useNoteEditing(note, onNoteContentUpdate, onNoteRename, onNotePathChange);
   
   // Get find/replace functionality from custom hook
@@ -108,7 +110,7 @@ export const OptimizedNoteViewer: React.FC<OptimizedNoteViewerProps> = ({
     handleFindPreviousMatch,
     handleReplaceMatch,
     handleReplaceAllMatches
-  } = useFindReplace(note, contentRef, isEditing);
+  } = useFindReplace(note, contentRef, isEditing, setEditedContent, saveContent);
   
   // Get optimized backlinks functionality
   // Defer loading backlinks until after note content is displayed

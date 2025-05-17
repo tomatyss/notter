@@ -378,7 +378,9 @@ export const useNoteEditing = (
 export const useFindReplace = (
   note: Note | null,
   contentRef: RefObject<HTMLDivElement | null>,
-  isEditing: boolean
+  isEditing: boolean,
+  setEditedContent: (content: string) => void,
+  saveContent: (content: string) => void
 ) => {
   // Find and replace state
   const [findReplaceVisible, setFindReplaceVisible] = useState(false);
@@ -466,47 +468,43 @@ export const useFindReplace = (
   // Replace current match
   const handleReplaceMatch = useCallback((replacement: string) => {
     if (matches.length === 0 || !note) return;
-    
+
     const matchIndex = matches[currentMatchIndex - 1];
     const matchLength = lastSearchText.length;
-    
+
     // Create the new content with the replacement
-    const newContent = 
-      note.content.substring(0, matchIndex) + 
-      replacement + 
-      note.content.substring(matchIndex + matchLength);
-    
-    // Update the content
-    // This would typically call a function from the editing hook
-    // For now, we'll just return the new content
-    return newContent;
-  }, [matches, currentMatchIndex, lastSearchText, note]);
+    const newContent = replaceAt(note.content, matchIndex, matchLength, replacement);
+
+    // Persist the updated content
+    setEditedContent(newContent);
+    saveContent(newContent);
+
+    // Refresh matches after replacing
+    setTimeout(() => {
+      handleFindTextInContent(lastSearchText, lastSearchOptions);
+    }, 100);
+  }, [matches, currentMatchIndex, lastSearchText, lastSearchOptions, note, setEditedContent, saveContent, handleFindTextInContent]);
   
   // Replace all matches
   const handleReplaceAllMatches = useCallback((replacement: string) => {
     if (matches.length === 0 || !note) return;
     
-    // Create a regex for the search
-    let flags = 'g';
-    if (!lastSearchOptions.caseSensitive) {
-      flags += 'i';
-    }
-    
-    let regex: RegExp;
-    if (lastSearchOptions.wholeWord) {
-      regex = new RegExp(`\\b${escapeRegExp(lastSearchText)}\\b`, flags);
-    } else {
-      regex = new RegExp(escapeRegExp(lastSearchText), flags);
-    }
-    
     // Replace all matches
-    const newContent = note.content.replace(regex, replacement);
-    
-    // Update the content
-    // This would typically call a function from the editing hook
-    // For now, we'll just return the new content
-    return newContent;
-  }, [matches, lastSearchText, lastSearchOptions, note]);
+    const newContent = replaceAll(
+      note.content,
+      lastSearchText,
+      lastSearchOptions,
+      replacement
+    );
+
+    // Persist the updated content
+    setEditedContent(newContent);
+    saveContent(newContent);
+
+    // Clear matches and reset index
+    setMatches([]);
+    setCurrentMatchIndex(0);
+  }, [matches, lastSearchText, lastSearchOptions, note, setEditedContent, saveContent]);
   
   return {
     findReplaceVisible, setFindReplaceVisible,
@@ -622,6 +620,37 @@ export const useKeyboardShortcuts = ({
 // Helper function to escape special characters in regex
 export const escapeRegExp = (string: string) => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
+// Replace text at a specific index
+export const replaceAt = (
+  content: string,
+  index: number,
+  length: number,
+  replacement: string
+): string => {
+  return content.substring(0, index) + replacement + content.substring(index + length);
+};
+
+// Replace all occurrences of a search string using options
+export const replaceAll = (
+  content: string,
+  searchText: string,
+  options: { caseSensitive: boolean; wholeWord: boolean },
+  replacement: string
+): string => {
+  let flags = 'g';
+  if (!options.caseSensitive) {
+    flags += 'i';
+  }
+
+  let regex: RegExp;
+  if (options.wholeWord) {
+    regex = new RegExp(`\\b${escapeRegExp(searchText)}\\b`, flags);
+  } else {
+    regex = new RegExp(escapeRegExp(searchText), flags);
+  }
+  return content.replace(regex, replacement);
 };
 
 // Helper function to scroll to a match

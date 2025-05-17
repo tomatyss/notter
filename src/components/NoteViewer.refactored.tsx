@@ -94,7 +94,9 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
     handlePathBlur,
     handleContentKeyDown,
     handleTitleKeyPress,
-    handlePathKeyPress
+    handlePathKeyPress,
+    setEditedContent,
+    saveContent
   } = useNoteEditing(note, onNoteContentUpdate, onNoteRename, onNotePathChange);
   
   // Get find/replace functionality from custom hook
@@ -108,7 +110,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
     handleFindPreviousMatch,
     handleReplaceMatch,
     handleReplaceAllMatches
-  } = useFindReplace(note, contentRef, isEditing);
+  } = useFindReplace(note, contentRef, isEditing, setEditedContent, saveContent);
   
   // Get backlinks functionality from custom hook
   const {
