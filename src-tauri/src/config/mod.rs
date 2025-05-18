@@ -15,6 +15,23 @@ pub enum AutoUpdateMode {
     Hybrid,
 }
 
+/// Theme preference
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Theme {
+    /// Follow system preference
+    System,
+    /// Use light theme
+    Light,
+    /// Use dark theme
+    Dark,
+}
+
+impl Default for Theme {
+    fn default() -> Self {
+        Self::System
+    }
+}
+
 impl Default for AutoUpdateMode {
     fn default() -> Self {
         Self::Incremental
@@ -47,6 +64,10 @@ pub struct AppConfig {
     /// Interval for periodic index rebuilds (in minutes)
     #[serde(default = "default_update_interval")]
     pub auto_update_interval: u32,
+
+    /// Preferred theme
+    #[serde(default)]
+    pub theme: Theme,
 }
 
 /// Default update interval (30 minutes)
@@ -67,6 +88,7 @@ impl Default for AppConfig {
             auto_update_search_index: true,
             auto_update_mode: AutoUpdateMode::Incremental,
             auto_update_interval: 30,
+            theme: Theme::System,
         }
     }
 }
@@ -209,6 +231,12 @@ impl ConfigManager {
     pub fn set_auto_update_interval(&mut self, interval: u32) -> Result<()> {
         // Update config
         self.config.auto_update_interval = interval;
+        self.save_config()
+    }
+
+    /// Sets the preferred theme
+    pub fn set_theme(&mut self, theme: Theme) -> Result<()> {
+        self.config.theme = theme;
         self.save_config()
     }
     

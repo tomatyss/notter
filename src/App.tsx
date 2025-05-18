@@ -31,6 +31,9 @@ function App() {
   
   // Chat state
   const [isChatVisible, setIsChatVisible] = useState<boolean>(false);
+
+  // Theme state
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
   
   // Application state
   const [config, setConfig] = useState<AppConfig | null>(null);
@@ -100,6 +103,7 @@ function App() {
         setConfigLoading(true);
         const config = await invoke<AppConfig>('get_config');
         setConfig(config);
+        setTheme(config.theme);
         
         // If notes directory is configured, load notes
         if (config.notes_dir) {
@@ -191,12 +195,25 @@ function App() {
   // Handle configuration update
   const handleConfigUpdate = (updatedConfig: AppConfig) => {
     setConfig(updatedConfig);
+    setTheme(updatedConfig.theme);
     
     if (!updatedConfig.notes_dir) {
       setConfigLoading(false); // Ensure configLoading is set to false if no notes directory is configured
     }
     // loadNotes will be called by the useEffect when config changes
   };
+
+  // Apply theme to document
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'light') {
+      root.setAttribute('data-theme', 'light');
+    } else if (theme === 'dark') {
+      root.setAttribute('data-theme', 'dark');
+    } else {
+      root.removeAttribute('data-theme');
+    }
+  }, [theme]);
 
   // Load a specific note
   const handleSelectNote = async (id: string) => {
