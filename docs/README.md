@@ -17,6 +17,7 @@ This directory contains comprehensive documentation for various features impleme
 - [**Search Implementation Documentation**](./search-implementation.md) - Detailed technical documentation of how search is implemented in Notter.
 - [**Search Developer Guide**](./search-developer-guide.md) - Practical guide for developers who want to use or extend the search functionality.
 - [**Search Architecture Diagrams**](./search-architecture.md) - Visual representations of the search architecture and data flow.
+- [**Testing Guide**](./testing-guide.md) - Instructions for running frontend and backend tests.
 
 ## Search Features
 
