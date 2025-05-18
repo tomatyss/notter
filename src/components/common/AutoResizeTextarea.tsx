@@ -11,6 +11,10 @@ interface AutoResizeTextareaProps
    * Additional class name for the textarea
    */
   className?: string;
+  /**
+   * Enable or disable automatic height resizing. Defaults to true.
+   */
+  autoResize?: boolean;
 }
 
 /**
@@ -22,8 +26,9 @@ interface AutoResizeTextareaProps
  * @returns AutoResizeTextarea component
  */
 export const AutoResizeTextarea = forwardRef<HTMLTextAreaElement, AutoResizeTextareaProps>(({ 
-  className, 
-  ...props 
+  className,
+  autoResize = true,
+  ...props
 }, ref) => {
   // Create an internal ref if no ref is provided
   const internalRef = useRef<HTMLTextAreaElement>(null);
@@ -34,34 +39,34 @@ export const AutoResizeTextarea = forwardRef<HTMLTextAreaElement, AutoResizeText
    * Handle resizing of the textarea
    */
   const handleResize = useCallback(() => {
-    if (textareaRef.current) {
-      // Use requestAnimationFrame for smoother updates
-      requestAnimationFrame(() => {
-        // Reset height to auto first to get the correct scrollHeight
-        textareaRef.current!.style.height = 'auto';
-        
-        // Get the computed max-height from CSS
-        const maxHeight = parseInt(
-          window.getComputedStyle(textareaRef.current!).getPropertyValue('max-height'),
-          10
-        );
-        
-        // Calculate new height based on content
-        const newHeight = textareaRef.current!.scrollHeight;
-        
-        // Apply the height, respecting max-height if defined
-        if (!isNaN(maxHeight) && newHeight > maxHeight) {
-          textareaRef.current!.style.height = `${maxHeight}px`;
-          // Ensure scrolling is enabled when content exceeds max-height
-          textareaRef.current!.style.overflowY = 'auto';
-        } else {
-          textareaRef.current!.style.height = `${newHeight}px`;
-          // Disable scrolling when content fits
-          textareaRef.current!.style.overflowY = 'hidden';
-        }
-      });
-    }
-  }, []);
+    if (!autoResize || !textareaRef.current) return;
+
+    // Use requestAnimationFrame for smoother updates
+    requestAnimationFrame(() => {
+      // Reset height to auto first to get the correct scrollHeight
+      textareaRef.current!.style.height = 'auto';
+
+      // Get the computed max-height from CSS
+      const maxHeight = parseInt(
+        window.getComputedStyle(textareaRef.current!).getPropertyValue('max-height'),
+        10
+      );
+
+      // Calculate new height based on content
+      const newHeight = textareaRef.current!.scrollHeight;
+
+      // Apply the height, respecting max-height if defined
+      if (!isNaN(maxHeight) && newHeight > maxHeight) {
+        textareaRef.current!.style.height = `${maxHeight}px`;
+        // Ensure scrolling is enabled when content exceeds max-height
+        textareaRef.current!.style.overflowY = 'auto';
+      } else {
+        textareaRef.current!.style.height = `${newHeight}px`;
+        // Disable scrolling when content fits
+        textareaRef.current!.style.overflowY = 'hidden';
+      }
+    });
+  }, [autoResize]);
 
   // Debounce the resize handler to prevent too many updates
   const debouncedResize = useCallback(debounce(handleResize, 100), [
@@ -70,11 +75,18 @@ export const AutoResizeTextarea = forwardRef<HTMLTextAreaElement, AutoResizeText
 
   // Resize when the value changes
   useEffect(() => {
-    handleResize();
-  }, [props.value, handleResize]);
+    if (autoResize) {
+      handleResize();
+    }
+  }, [props.value, handleResize, autoResize]);
 
-  // Use the resize observer to detect size changes
-  useResizeObserver(textareaRef, debouncedResize);
+  // Use the resize observer to detect size changes. The handler itself checks
+  // whether auto-resize is enabled before performing any resizing logic.
+  useResizeObserver(textareaRef, () => {
+    if (autoResize) {
+      debouncedResize();
+    }
+  });
 
   return (
     <textarea
