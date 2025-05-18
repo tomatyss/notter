@@ -405,6 +405,8 @@ export const NoteContent: React.FC<NoteContentProps> = ({
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
             className="content-editor"
+            autoResize={false}
+            style={{ height: '100%' }}
             autoFocus
           />
           {isSaving && <span className="autosave-indicator">Saving...</span>}
