@@ -12,7 +12,7 @@
     "ios:build": "tauri ios build"
   },
   "dependencies": {
-    "@google/genai": "^0.13.0",
+    "@google/genai": "^0.15.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "^2.2.1",
     "@tauri-apps/plugin-opener": "^2",
