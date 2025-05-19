@@ -139,6 +139,24 @@ async fn set_auto_update_interval(
     Ok(config_manager.get_config())
 }
 
+/// Sets the preferred theme
+///
+/// # Parameters
+/// * `theme` - Theme preference
+///
+/// # Returns
+/// The updated application configuration
+#[tauri::command]
+async fn set_theme(theme: config::Theme, state: State<'_, AppState>) -> Result<AppConfig, String> {
+    let mut config_manager = state.config_manager.lock().map_err(|e| e.to_string())?;
+
+    config_manager
+        .set_theme(theme)
+        .map_err(|e| e.to_string())?;
+
+    Ok(config_manager.get_config())
+}
+
 /// Selects a folder for storing notes
 ///
 /// # Parameters
@@ -874,6 +892,7 @@ pub fn run() {
             set_auto_update_search_index,
             set_auto_update_mode,
             set_auto_update_interval,
+            set_theme,
             list_notes,
             get_note,
             update_note_content,

@@ -71,6 +71,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const [savingUpdateInterval, setSavingUpdateInterval] = useState(false);
   const [updateIntervalError, setUpdateIntervalError] = useState<string | null>(null);
   const [updateIntervalSuccess, setUpdateIntervalSuccess] = useState(false);
+
+  // Theme settings
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
+  const [savingTheme, setSavingTheme] = useState(false);
+  const [themeError, setThemeError] = useState<string | null>(null);
+  const [themeSuccess, setThemeSuccess] = useState(false);
   
   // Initialize settings from config
   useEffect(() => {
@@ -91,6 +97,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       setAutoUpdateIndex(config.auto_update_search_index);
       setUpdateMode(config.auto_update_mode);
       setUpdateInterval(config.auto_update_interval);
+      setTheme(config.theme);
     }
     
     // Initialize API key settings
@@ -331,6 +338,33 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       setSavingUpdateInterval(false);
     }
   };
+
+  /**
+   * Handles changing the application theme
+   */
+  const handleThemeChange = async (newTheme: 'light' | 'dark' | 'system') => {
+    try {
+      setSavingTheme(true);
+      setThemeError(null);
+      setThemeSuccess(false);
+
+      setTheme(newTheme);
+
+      const updatedConfig = await invoke<AppConfig>('set_theme', { theme: newTheme });
+
+      onConfigUpdate(updatedConfig);
+      setThemeSuccess(true);
+      setSavingTheme(false);
+
+      setTimeout(() => {
+        setThemeSuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Failed to update theme:', error);
+      setThemeError(`Failed to update theme: ${error}`);
+      setSavingTheme(false);
+    }
+  };
   
   /**
    * Handles saving the Gemini API key
@@ -433,9 +467,27 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <div className="pattern-help">
             Default type to use when creating new notes
           </div>
-          {noteTypeError && <div className="error-message">{noteTypeError}</div>}
-          {noteTypeSuccess && <div className="success-message">Default note type saved successfully!</div>}
+        {noteTypeError && <div className="error-message">{noteTypeError}</div>}
+        {noteTypeSuccess && <div className="success-message">Default note type saved successfully!</div>}
+      </div>
+
+      <div className="setting-item">
+        <label>Theme</label>
+        <div className="pattern-selector">
+          <select
+            value={theme}
+            onChange={(e) => handleThemeChange(e.target.value as 'light' | 'dark' | 'system')}
+            className="pattern-input"
+            disabled={loading || savingTheme}
+          >
+            <option value="system">System</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
         </div>
+        {themeError && <div className="error-message">{themeError}</div>}
+        {themeSuccess && <div className="success-message">Theme updated successfully!</div>}
+      </div>
 
         <div className="setting-item">
           <label>Search Index</label>

@@ -52,6 +52,11 @@ export interface AppConfig {
    * Interval for periodic index rebuilds (in minutes)
    */
   auto_update_interval: number;
+
+  /**
+   * Preferred application theme
+   */
+  theme: "light" | "dark" | "system";
 }
 
 /**
