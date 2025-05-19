@@ -279,26 +279,72 @@ impl NoteManager {
     /// # Returns
     /// A summary of the note
     fn get_note_summary(&self, path: &Path) -> Result<NoteSummary> {
-        // Read just enough of the file to extract metadata
-        let content = fs::read_to_string(path)
-            .context("Failed to read note file")?;
-        
         let file_type = self.get_note_type(path);
         
-        // Extract title based on file type
-        let title = match file_type {
-            NoteType::Markdown => content.lines()
-                .next()
-                .map(|line| line.trim_start_matches('#').trim().to_string())
-                .unwrap_or_else(|| "Untitled Note".to_string()),
-            NoteType::PlainText => path.file_stem()
-                .and_then(|stem| stem.to_str())
-                .map(|s| s.to_string())
-                .unwrap_or_else(|| "Untitled Note".to_string()),
+        // For title and tags, we only need to read a portion of the file
+        // This is more efficient for large files
+        let (title, tags) = match file_type {
+            NoteType::Markdown => {
+                // For markdown files, read the first few lines to extract title and tags
+                let file = fs::File::open(path)
+                    .context("Failed to open note file")?;
+                let reader = std::io::BufReader::new(file);
+                let mut lines = Vec::new();
+                let mut line_count = 0;
+                
+                // Read up to 50 lines or until EOF
+                for line in std::io::BufRead::lines(reader) {
+                    if let Ok(line) = line {
+                        lines.push(line);
+                        line_count += 1;
+                        if line_count >= 50 {
+                            break;
+                        }
+                    }
+                }
+                
+                // Extract title from the first line
+                let title = lines.first()
+                    .map(|line| line.trim_start_matches('#').trim().to_string())
+                    .unwrap_or_else(|| "Untitled Note".to_string());
+                
+                // Extract tags from the first few lines
+                let content = lines.join("\n");
+                let tags = self.extract_tags(&content);
+                
+                (title, tags)
+            },
+            NoteType::PlainText => {
+                // For plain text files, use filename as title
+                let title = path.file_stem()
+                    .and_then(|stem| stem.to_str())
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| "Untitled Note".to_string());
+                
+                // For tags, read the first few lines
+                let file = fs::File::open(path)
+                    .context("Failed to open note file")?;
+                let reader = std::io::BufReader::new(file);
+                let mut content = String::new();
+                let mut line_count = 0;
+                
+                // Read up to 50 lines or until EOF
+                for line in std::io::BufRead::lines(reader) {
+                    if let Ok(line) = line {
+                        content.push_str(&line);
+                        content.push('\n');
+                        line_count += 1;
+                        if line_count >= 50 {
+                            break;
+                        }
+                    }
+                }
+                
+                let tags = self.extract_tags(&content);
+                
+                (title, tags)
+            }
         };
-        
-        // Extract tags from content
-        let tags = self.extract_tags(&content);
         
         // Get file metadata
         let metadata = path.metadata()
@@ -442,9 +488,6 @@ impl NoteManager {
         // Get the current file path from the ID
         let current_path = self.get_note_path(id)?;
         
-        // Create the new absolute path
-        let mut new_path = self.notes_dir.join(new_relative_path);
-
         // Prevent directory traversal by normalizing the path and ensuring it remains inside notes_dir
         let mut normalized = PathBuf::new();
         for comp in Path::new(new_relative_path).components() {
@@ -456,7 +499,7 @@ impl NoteManager {
                 other => normalized.push(other.as_os_str()),
             }
         }
-        new_path = self.notes_dir.join(normalized);
+        let new_path = self.notes_dir.join(normalized);
 
         // Ensure the resulting path is still within the notes directory
         if !new_path.starts_with(&self.notes_dir) {
@@ -693,15 +736,57 @@ impl NoteManager {
         
         // Check each note for links to the specified note
         for summary in notes {
-            // Get the full note to check its content
-            if let Ok(note) = self.get_note(&summary.id) {
-                // Check if the note content contains a link to the specified note
-                if regex.is_match(&note.content) {
+            // Get the path from the ID
+            if let Ok(path) = self.get_note_path(&summary.id) {
+                // Check if the file contains the link pattern
+                // We'll read the file in chunks to avoid loading the entire file
+                if self.file_contains_pattern(&path, &regex)? {
                     backlinks.push(summary);
                 }
             }
         }
         
         Ok(backlinks)
+    }
+    
+    /// Checks if a file contains a specific regex pattern
+    /// 
+    /// # Parameters
+    /// * `path` - Path to the file to check
+    /// * `pattern` - Regex pattern to search for
+    /// 
+    /// # Returns
+    /// True if the file contains the pattern, false otherwise
+    fn file_contains_pattern(&self, path: &Path, pattern: &Regex) -> Result<bool> {
+        // Use a line-by-line approach which is safer for UTF-8 text
+        let file = fs::File::open(path)
+            .context("Failed to open note file")?;
+        let reader = std::io::BufReader::new(file);
+        
+        // We'll read the file line by line, but keep a buffer of recent lines
+        // to handle patterns that might span multiple lines
+        const BUFFER_LINES: usize = 5; // Keep last 5 lines in buffer
+        let mut line_buffer = Vec::with_capacity(BUFFER_LINES);
+        
+        // Process each line
+        for line_result in std::io::BufRead::lines(reader) {
+            let line = line_result.context("Failed to read line from file")?;
+            
+            // Add the new line to our buffer
+            line_buffer.push(line);
+            
+            // If buffer is larger than our desired size, remove oldest line
+            if line_buffer.len() > BUFFER_LINES {
+                line_buffer.remove(0);
+            }
+            
+            // Join the buffer lines and check for pattern
+            let text = line_buffer.join("\n");
+            if pattern.is_match(&text) {
+                return Ok(true);
+            }
+        }
+        
+        Ok(false)
     }
 }
