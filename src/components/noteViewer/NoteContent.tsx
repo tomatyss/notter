@@ -1,4 +1,4 @@
-import React, { RefObject, useEffect, useRef } from 'react';
+import React, { RefObject, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Note, NoteType } from '../../types';
 import { createMatchSegments, noteLinkRegex, urlRegex, isValidUrl, normalizeUrl, getTextNodesIn } from '../../utils/textUtils';
@@ -109,7 +109,9 @@ export const NoteContent: React.FC<NoteContentProps> = ({
 }) => {
   // Store the scroll position to maintain it between view/edit mode switches
   const scrollPositionRef = useRef<number>(0);
-  
+  // Capture the editor height when switching to edit mode so it stays constant
+  const [editorHeight, setEditorHeight] = useState<number>();
+
   // Save scroll position when switching modes
   useEffect(() => {
     if (contentRef.current) {
@@ -120,6 +122,10 @@ export const NoteContent: React.FC<NoteContentProps> = ({
             contentRef.current.scrollTop = scrollPositionRef.current;
           }
         }, 50);
+        setEditorHeight(undefined);
+      } else {
+        // When entering edit mode, remember the current height
+        setEditorHeight(contentRef.current.clientHeight);
       }
     }
   }, [isEditing]);
@@ -405,6 +411,8 @@ export const NoteContent: React.FC<NoteContentProps> = ({
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
             className="content-editor"
+            autoResize={false}
+            style={editorHeight ? { height: editorHeight } : undefined}
             autoFocus
           />
           {isSaving && <span className="autosave-indicator">Saving...</span>}
