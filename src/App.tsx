@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { NoteList } from "./components/NoteList";
@@ -6,13 +6,17 @@ import { NewNoteButton, NewNoteButtonRef } from "./components/NewNoteButton";
 import { OptimizedNoteViewer } from "./components/OptimizedNoteViewer";
 import { SearchPanel } from "./components/SearchPanel";
 import { TagFilter } from "./components/TagFilter";
-import { ChatPanel } from "./components/chat";
 import MobileLayout from "./components/MobileLayout";
 import { Icon, IconName } from "./components/common";
 import { AppConfig, Note, NoteSummary, SortOption } from "./types";
 import { useNewNoteShortcut } from "./hooks/useNewNoteShortcut";
 import { useCachedNotes } from "./hooks/useCachedNotes";
 import "./App.css";
+
+// Lazy load the ChatPanel component
+const ChatPanel = React.lazy(() => import("./components/chat").then(module => ({
+  default: module.ChatPanel
+})));
 
 /**
  * Main application component
@@ -452,11 +456,13 @@ function App() {
           {/* Chat sidebar */}
           {isChatVisible && (
             <div className="chat-sidebar">
-              <ChatPanel 
-                isVisible={isChatVisible}
-                onClose={() => setIsChatVisible(false)}
-                currentNote={selectedNote}
-              />
+              <Suspense fallback={<div className="loading-chat">Loading chat...</div>}>
+                <ChatPanel 
+                  isVisible={isChatVisible}
+                  onClose={() => setIsChatVisible(false)}
+                  currentNote={selectedNote}
+                />
+              </Suspense>
             </div>
           )}
         </main>

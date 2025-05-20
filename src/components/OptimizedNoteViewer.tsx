@@ -1,8 +1,7 @@
-import React, { useRef } from 'react';
+import React, { useRef, Suspense, lazy } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { Note } from '../types';
-import { FindReplacePanel } from './FindReplacePanel';
 import { 
   useNoteEditing, 
   useFindReplace, 
@@ -11,7 +10,15 @@ import {
 import { useOptimizedBacklinks } from '../hooks/useOptimizedBacklinks';
 import { NoteHeader } from './noteViewer/NoteHeader';
 import { NoteContent } from './noteViewer/NoteContent';
-import { BacklinksSection } from './noteViewer/BacklinksSection';
+
+// Lazy load components that aren't needed immediately
+const FindReplacePanel = lazy(() => import('./FindReplacePanel').then(module => ({
+  default: module.FindReplacePanel
+})));
+
+const BacklinksSection = lazy(() => import('./noteViewer/BacklinksSection').then(module => ({
+  default: module.BacklinksSection
+})));
 
 /**
  * Props for the OptimizedNoteViewer component
@@ -190,17 +197,21 @@ export const OptimizedNoteViewer: React.FC<OptimizedNoteViewerProps> = ({
   return (
     <div className="note-viewer">
       {/* Find and Replace Panel */}
-      <FindReplacePanel
-        isVisible={findReplaceVisible}
-        onClose={() => setFindReplaceVisible(false)}
-        onFind={handleFindTextInContent}
-        onFindNext={handleFindNextMatch}
-        onFindPrevious={handleFindPreviousMatch}
-        onReplace={handleReplaceMatch}
-        onReplaceAll={handleReplaceAllMatches}
-        totalMatches={matches.length}
-        currentMatchIndex={currentMatchIndex}
-      />
+      {findReplaceVisible && (
+        <Suspense fallback={<div className="loading-find-replace">Loading find/replace...</div>}>
+          <FindReplacePanel
+            isVisible={findReplaceVisible}
+            onClose={() => setFindReplaceVisible(false)}
+            onFind={handleFindTextInContent}
+            onFindNext={handleFindNextMatch}
+            onFindPrevious={handleFindPreviousMatch}
+            onReplace={handleReplaceMatch}
+            onReplaceAll={handleReplaceAllMatches}
+            totalMatches={matches.length}
+            currentMatchIndex={currentMatchIndex}
+          />
+        </Suspense>
+      )}
       
       {/* Note Header */}
       <NoteHeader
@@ -251,12 +262,14 @@ export const OptimizedNoteViewer: React.FC<OptimizedNoteViewerProps> = ({
           onExternalLinkClick={handleExternalLinkClick}
         />
         
-        {/* Backlinks Section - loaded with a delay */}
-        <BacklinksSection
-          backlinks={backlinks}
-          backlinksLoading={backlinksLoading}
-          onSelectNote={onSelectNote}
-        />
+        {/* Backlinks Section - lazy loaded with a delay */}
+        <Suspense fallback={<div className="loading-backlinks">Loading backlinks...</div>}>
+          <BacklinksSection
+            backlinks={backlinks}
+            backlinksLoading={backlinksLoading}
+            onSelectNote={onSelectNote}
+          />
+        </Suspense>
       </div>
     </div>
   );

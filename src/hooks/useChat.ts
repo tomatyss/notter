@@ -67,10 +67,25 @@ export function useChat(initialProviderId = 'ollama') {
   // Refresh available providers
   useEffect(() => {
     // Update available providers
-    setState(prev => ({
-      ...prev,
-      availableProviders: defaultProviderRegistry.getAvailableProviders()
-    }));
+    const refreshProviders = async () => {
+      try {
+        // Ensure providers are initialized
+        await defaultProviderRegistry.refreshProviders();
+        
+        setState(prev => ({
+          ...prev,
+          availableProviders: defaultProviderRegistry.getAvailableProviders()
+        }));
+      } catch (error) {
+        console.error('Error refreshing providers:', error);
+        setState(prev => ({
+          ...prev,
+          error: `Failed to refresh providers: ${error}`
+        }));
+      }
+    };
+    
+    refreshProviders();
   }, []);
   
   // Load available models when the provider changes

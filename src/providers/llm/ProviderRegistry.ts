@@ -1,6 +1,4 @@
 import { LLMProvider } from './types';
-import { OllamaProvider } from './OllamaProvider';
-import { GeminiProvider } from './GeminiProvider';
 
 /**
  * Registry for LLM providers
@@ -11,7 +9,7 @@ export class ProviderRegistry {
    * Map of provider IDs to provider instances
    */
   private providers = new Map<string, LLMProvider>();
-  
+
   /**
    * Creates a new ProviderRegistry instance
    * Initializes with default providers if specified
@@ -20,40 +18,50 @@ export class ProviderRegistry {
    */
   constructor(initializeDefaults = true) {
     if (initializeDefaults) {
-      this.initializeDefaultProviders();
+      // Initialize providers asynchronously
+      this.initializeDefaultProviders().catch(error => {
+        console.error('Error initializing default providers:', error);
+      });
     }
   }
-  
+
   /**
    * Initialize default providers
    * Includes Ollama and Gemini (if API key is available)
+   * Uses dynamic imports to load providers only when needed
    */
-  private initializeDefaultProviders(): void {
-    // Add Ollama provider
-    const ollamaProvider = new OllamaProvider();
-    this.registerProvider(ollamaProvider);
-    
-    // Add Gemini provider (if API key is available)
-    const geminiApiKey = localStorage.getItem('gemini_api_key');
-    if (geminiApiKey) {
-      const geminiProvider = new GeminiProvider(geminiApiKey);
-      this.registerProvider(geminiProvider);
+  private async initializeDefaultProviders(): Promise<void> {
+    try {
+      // Dynamically import the Ollama provider
+      const { OllamaProvider } = await import('./OllamaProvider');
+      const ollamaProvider = new OllamaProvider();
+      this.registerProvider(ollamaProvider);
+      
+      // Add Gemini provider (if API key is available)
+      const geminiApiKey = localStorage.getItem('gemini_api_key');
+      if (geminiApiKey) {
+        const { GeminiProvider } = await import('./GeminiProvider');
+        const geminiProvider = new GeminiProvider(geminiApiKey);
+        this.registerProvider(geminiProvider);
+      }
+    } catch (error) {
+      console.error('Error initializing providers:', error);
     }
   }
-  
+
   /**
    * Refresh providers
    * Clears existing providers and re-initializes them
    * Useful when API keys change
    */
-  public refreshProviders(): void {
+  public async refreshProviders(): Promise<void> {
     // Clear existing providers
     this.providers.clear();
-    
+
     // Re-initialize providers
-    this.initializeDefaultProviders();
+    await this.initializeDefaultProviders();
   }
-  
+
   /**
    * Register a provider with the registry
    * 
@@ -62,7 +70,7 @@ export class ProviderRegistry {
   registerProvider(provider: LLMProvider): void {
     this.providers.set(provider.id, provider);
   }
-  
+
   /**
    * Get a provider by ID
    * 
@@ -72,7 +80,7 @@ export class ProviderRegistry {
   getProvider(id: string): LLMProvider | undefined {
     return this.providers.get(id);
   }
-  
+
   /**
    * Get all available providers
    * 
@@ -81,7 +89,7 @@ export class ProviderRegistry {
   getAvailableProviders(): LLMProvider[] {
     return Array.from(this.providers.values());
   }
-  
+
   /**
    * Get the IDs of all available providers
    * 
