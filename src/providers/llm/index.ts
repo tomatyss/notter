@@ -1,14 +1,11 @@
 /**
  * LLM Provider module
- * Exports all LLM provider-related types and implementations
+ * Exports LLM provider-related types and registry
+ * Provider implementations are dynamically imported when needed
  */
 
 // Export types
 export * from './types';
-
-// Export provider implementations
-export * from './OllamaProvider';
-export * from './GeminiProvider';
 
 // Export provider registry
 export * from './ProviderRegistry';
