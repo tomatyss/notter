@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './SubnotesSection.css';
 import { invoke } from '@tauri-apps/api/core';
-import { SubnoteInfo, Note, NoteSummary } from '../../types';
+import { SubnoteInfo, Note } from '../../types';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 
 interface SubnotesSectionProps {

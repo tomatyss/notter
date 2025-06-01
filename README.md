@@ -13,6 +13,7 @@ Notter is a cross-platform desktop application for working with text files as a 
 - **Tag-Based Organization**: Automatically extract and organize notes by tags
 - **Note Linking**: Create links between notes using `[[Note Title]]` syntax
 - **Backlinks**: View which notes link to the current note
+- **Zettelkasten Subnotes**: Hierarchical note organization with automatic subnote detection
 - **Markdown Support**: Full support for Markdown formatting
 - **Plain Text Support**: Work with simple text files
 - **Local-First Storage**: Your notes are stored as regular files on your system
@@ -91,6 +92,45 @@ When viewing the note, the link will be clickable and will navigate to the linke
 ### Backlinks
 
 Notter automatically tracks which notes link to the current note and displays them in a "Linked from" section at the bottom of the note. This helps you understand the connections between your notes and navigate between related content.
+
+### Zettelkasten Subnotes
+
+Notter supports the Zettelkasten method of hierarchical note organization through automatic subnote detection. When you view a note, Notter automatically finds and displays related subnotes based on your naming pattern.
+
+#### How It Works
+
+The system follows the traditional Zettelkasten numbering pattern:
+
+- **Main note**: `1-philosophy`
+- **Level 1 subnotes**: `1a-metaphysics`, `1b-epistemology`, `1c-ethics`
+- **Level 2 subnotes**: `1a1-mind-body-problem`, `1a2-free-will`, `1b1-gettier-problems`
+
+#### Features
+
+- **Automatic Detection**: Subnotes are automatically detected based on title patterns
+- **Visual Hierarchy**: Different depth levels are visually distinguished with colored borders
+- **Content Previews**: Each subnote shows a clean preview of its content (up to 300 characters)
+- **Proper Sorting**: Subnotes are sorted in logical Zettelkasten order (1a, 1a1, 1a2, 1b, 1c, etc.)
+- **Boundary Protection**: Ensures "10" is not considered a subnote of "1"
+- **Click Navigation**: Click any subnote to navigate directly to it
+- **Metadata Display**: Shows modification dates and tags for each subnote
+
+#### Example Structure
+
+```
+1-philosophy.md
+├── 1a-metaphysics.md
+│   ├── 1a1-mind-body-problem.md
+│   └── 1a2-free-will.md
+├── 1b-epistemology.md
+│   ├── 1b1-gettier-problems.md
+│   └── 1b2-skepticism.md
+└── 1c-ethics.md
+    ├── 1c1-utilitarianism.md
+    └── 1c2-deontology.md
+```
+
+When viewing `1-philosophy.md`, you'll see `1a-metaphysics.md`, `1b-epistemology.md`, and `1c-ethics.md` as subnotes. When viewing `1a-metaphysics.md`, you'll see only `1a1-mind-body-problem.md` and `1a2-free-will.md` as its direct subnotes.
 
 ### Visualization Techniques
 

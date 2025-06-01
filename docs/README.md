@@ -11,6 +11,7 @@ This directory contains comprehensive documentation for various features impleme
 - [**Note Linking Documentation**](./note-linking.md) - Comprehensive guide to creating and using links between notes.
 - [**Tag Filtering Documentation**](./tag-filtering.md) - Guide to using tags to organize and filter your notes.
 - [**Find and Replace Documentation**](./find-replace.md) - Instructions for using the find and replace functionality within notes.
+- [**Zettelkasten Subnotes Documentation**](./zettelkasten-subnotes.md) - Guide to hierarchical note organization using the Zettelkasten method.
 
 ### For Developers
 
@@ -56,6 +57,16 @@ The Notter application includes a comprehensive find and replace functionality t
 - Replace individual matches or all matches at once
 - Use case-sensitive and whole word search options
 - Access the functionality through familiar keyboard shortcuts (Ctrl+F/Cmd+F)
+
+## Zettelkasten Subnotes Features
+
+The Notter application includes hierarchical note organization using the Zettelkasten method that allows users to:
+
+- Automatically detect subnotes based on traditional Zettelkasten numbering patterns
+- View hierarchical relationships between notes with visual depth indicators
+- Navigate through complex knowledge structures with content previews
+- Organize notes in logical sequences (1a, 1a1, 1a2, 1b, 1c, etc.)
+- Maintain proper note boundaries to prevent false hierarchical matches
 
 ## Implementation Overview
 
@@ -104,3 +115,7 @@ If you're interested in organizing your notes with tags:
 If you need to find or replace text within your notes:
 
 1. **For all users**: Check out the [Find and Replace Documentation](./find-replace.md) for instructions on using the find and replace functionality
+
+If you want to organize your notes hierarchically using the Zettelkasten method:
+
+1. **For all users**: Read the [Zettelkasten Subnotes Documentation](./zettelkasten-subnotes.md) to learn how to create and navigate hierarchical note structures
