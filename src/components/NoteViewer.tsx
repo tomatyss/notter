@@ -14,32 +14,32 @@ interface NoteViewerProps {
    * The note to display
    */
   note: Note | null;
-  
+
   /**
    * Whether the component is in a loading state
    */
   loading: boolean;
-  
+
   /**
    * Callback when note content is updated
    */
   onNoteContentUpdate?: (id: string, content: string) => void;
-  
+
   /**
    * Callback when note is renamed 
    */
   onNoteRename?: (id: string, newName: string) => void;
-  
+
   /**
    * Callback when note path is changed
    */
   onNotePathChange?: (id: string, newPath: string) => void;
-  
+
   /**
    * Callback when a tag is clicked
    */
   onTagClick?: (tag: string) => void;
-  
+
   /**
    * Callback when a note is selected
    */
@@ -52,9 +52,9 @@ interface NoteViewerProps {
  * @param props Component props
  * @returns Note viewer UI component
  */
-export const NoteViewer: React.FC<NoteViewerProps> = ({ 
-  note, 
-  loading, 
+export const NoteViewer: React.FC<NoteViewerProps> = ({
+  note,
+  loading,
   onNoteContentUpdate,
   onNoteRename,
   onNotePathChange,
@@ -86,14 +86,14 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   const contentRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const pathRef = useRef<HTMLDivElement>(null);
-  
+
   // Reset states when note changes
   useEffect(() => {
     if (note) {
       setEditedContent(note.content);
       setEditedTitle(note.title);
       setEditedPath(note.path);
-      
+
       // Load backlinks for the current note
       loadBacklinks(note.title);
     }
@@ -101,7 +101,11 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
     setIsRenamingTitle(false);
     setIsEditingPath(false);
     setError(null);
-    
+
+    // Clear search state when note changes
+    clearSearchState();
+    setFindReplaceVisible(false);
+
     // Clear any pending autosave timers
     if (contentAutosaveTimerRef.current) {
       clearTimeout(contentAutosaveTimerRef.current);
@@ -112,8 +116,8 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
     if (pathAutosaveTimerRef.current) {
       clearTimeout(pathAutosaveTimerRef.current);
     }
-  }, [note]);
-  
+  }, [note, clearSearchState]);
+
   // Load backlinks for the current note
   const loadBacklinks = async (noteTitle: string) => {
     try {
@@ -127,7 +131,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       setBacklinksLoading(false);
     }
   };
-  
+
   // Cleanup timers on unmount
   useEffect(() => {
     return () => {
@@ -142,7 +146,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       }
     };
   }, []);
-  
+
   // Find and replace state
   const [findReplaceVisible, setFindReplaceVisible] = useState(false);
   const [matches, setMatches] = useState<number[]>([]);
@@ -152,69 +156,92 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
     caseSensitive: false,
     wholeWord: false
   });
-  
+
+  // Clear search state
+  const clearSearchState = useCallback(() => {
+    setMatches([]);
+    setCurrentMatchIndex(0);
+    setLastSearchText('');
+    setLastSearchOptions({
+      caseSensitive: false,
+      wholeWord: false
+    });
+
+    // Clear any text selection
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+    }
+
+    // Force re-render to clear highlights by triggering a state update
+    // This ensures the highlighting logic in the render method sees empty matches
+    setTimeout(() => {
+      // This timeout ensures the state update happens after the current render cycle
+    }, 0);
+  }, []);
+
   // Handle content changes - only save on blur, not during typing
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
     setEditedContent(newContent);
-    
+
     // Clear any existing timer to prevent autosave during content editing
     if (contentAutosaveTimerRef.current) {
       clearTimeout(contentAutosaveTimerRef.current);
     }
   };
-  
+
   // Handle title changes - only save on blur, not during typing
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
     setEditedTitle(newTitle);
-    
+
     // Clear any existing timer to prevent autosave during title editing
     if (titleAutosaveTimerRef.current) {
       clearTimeout(titleAutosaveTimerRef.current);
     }
   };
-  
+
   // Handle path changes - only save on blur, not during typing
   const handlePathChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPath = e.target.value;
     setEditedPath(newPath);
-    
+
     // Clear any existing timer to prevent autosave during path editing
     if (pathAutosaveTimerRef.current) {
       clearTimeout(pathAutosaveTimerRef.current);
     }
   };
-  
+
   // Handle double click on content to edit
   const handleContentDoubleClick = () => {
     if (!isEditing && !loading && note) {
       setIsEditing(true);
     }
   };
-  
+
   // Handle double click on title to rename
   const handleTitleDoubleClick = () => {
     if (!isRenamingTitle && !loading && note) {
       setIsRenamingTitle(true);
     }
   };
-  
+
   // Handle double click on path to edit
   const handlePathDoubleClick = () => {
     if (!isEditingPath && !loading && note) {
       setIsEditingPath(true);
     }
   };
-  
+
   // Save edited content
   const saveContent = async (content = editedContent) => {
     if (!note) return;
-    
+
     try {
       setIsSaving(true);
       setError(null);
-      
+
       if (onNoteContentUpdate) {
         // Use the callback to update the note content
         await onNoteContentUpdate(note.id, content);
@@ -225,22 +252,22 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
           content: content
         });
       }
-      
+
       setIsSaving(false);
     } catch (err) {
       setError(`Failed to save note: ${err}`);
       setIsSaving(false);
     }
   };
-  
+
   // Save renamed title
   const saveTitle = async (title = editedTitle) => {
     if (!note) return;
-    
+
     try {
       setIsSaving(true);
       setError(null);
-      
+
       if (onNoteRename) {
         // Use the callback to rename the note
         await onNoteRename(note.id, title);
@@ -251,22 +278,22 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
           newName: title
         });
       }
-      
+
       setIsSaving(false);
     } catch (err) {
       setError(`Failed to rename note: ${err}`);
       setIsSaving(false);
     }
   };
-  
+
   // Save path changes
   const savePath = async (path = editedPath) => {
     if (!note) return;
-    
+
     try {
       setIsSaving(true);
       setError(null);
-      
+
       if (onNotePathChange) {
         // Use the callback to change the note path
         await onNotePathChange(note.id, path);
@@ -277,14 +304,14 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
           newPath: path
         });
       }
-      
+
       setIsSaving(false);
     } catch (err) {
       setError(`Failed to change note path: ${err}`);
       setIsSaving(false);
     }
   };
-  
+
   // Handle blur events to exit edit mode and save
   const handleContentBlur = () => {
     // Save the content when the textarea loses focus
@@ -292,7 +319,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
     // Exit edit mode after saving
     setIsEditing(false);
   };
-  
+
   // Handle key press in content textarea
   const handleContentKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // Check for Ctrl+Enter or Cmd+Enter to save and exit
@@ -308,7 +335,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       setIsEditing(false);
     }
   };
-  
+
   // Handle blur events to exit rename mode and save
   const handleTitleBlur = () => {
     // Save the title when the input loses focus
@@ -316,7 +343,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
     // Exit rename mode after saving
     setIsRenamingTitle(false);
   };
-  
+
   // Handle key press in title input
   const handleTitleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     // Save and exit on Enter key
@@ -330,7 +357,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       setIsRenamingTitle(false);
     }
   };
-  
+
   // Handle blur events to exit path edit mode and save
   const handlePathBlur = () => {
     // Save the path when the input loses focus
@@ -338,7 +365,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
     // Exit path edit mode after saving
     setIsEditingPath(false);
   };
-  
+
   // Handle key press in path input
   const handlePathKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     // Save and exit on Enter key
@@ -352,95 +379,95 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       setIsEditingPath(false);
     }
   };
-  
+
   // Find text in content
-  const findTextInContent = useCallback((searchText: string, options: FindOptions) => {
+  const findTextInContent = useCallback((searchText: string, options: FindOptions, skipScroll = false) => {
     if (!note || !searchText) {
       setMatches([]);
       setCurrentMatchIndex(0);
       return;
     }
-    
+
     // Save the search text and options for later use
     setLastSearchText(searchText);
     setLastSearchOptions(options);
-    
+
     const content = note.content;
     const matches: number[] = [];
-    
+
     // Create a regex for the search
     let flags = 'g';
     if (!options.caseSensitive) {
       flags += 'i';
     }
-    
+
     let regex: RegExp;
     if (options.wholeWord) {
       regex = new RegExp(`\\b${escapeRegExp(searchText)}\\b`, flags);
     } else {
       regex = new RegExp(escapeRegExp(searchText), flags);
     }
-    
+
     // Find all matches
     let match;
     while ((match = regex.exec(content)) !== null) {
       matches.push(match.index);
     }
-    
+
     setMatches(matches);
     setCurrentMatchIndex(matches.length > 0 ? 1 : 0);
-    
-    // Scroll to the first match if there are any
-    if (matches.length > 0 && !isEditing) {
+
+    // Only scroll to the first match if not skipping scroll and not editing
+    if (matches.length > 0 && !isEditing && !skipScroll) {
       scrollToMatch(matches[0], searchText.length);
     }
   }, [note, isEditing]);
-  
+
   // Escape special characters in regex
   const escapeRegExp = (string: string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   };
-  
+
   // Scroll to a specific match
   const scrollToMatch = (index: number, length: number) => {
     if (!contentRef.current || isEditing) return;
-    
+
     // Get all text nodes in the content element
     const textNodes = getTextNodesIn(contentRef.current);
     let currentIndex = 0;
     let targetNode = null;
     let targetOffset = 0;
-    
+
     // Find the text node containing the match
     for (const node of textNodes) {
       const nodeLength = node.textContent?.length || 0;
-      
+
       if (currentIndex + nodeLength > index) {
         targetNode = node;
         targetOffset = index - currentIndex;
         break;
       }
-      
+
       currentIndex += nodeLength;
     }
-    
+
     if (targetNode) {
       // Create a range to select the match
       const range = document.createRange();
       range.setStart(targetNode, targetOffset);
       range.setEnd(targetNode, targetOffset + length);
-      
+
       // Scroll to the range
       const selection = window.getSelection();
       if (selection) {
         selection.removeAllRanges();
         selection.addRange(range);
-        
+
         // Scroll the match into view
         const rect = range.getBoundingClientRect();
         const container = contentRef.current;
         const containerRect = container.getBoundingClientRect();
-        
+
         if (rect.top < containerRect.top || rect.bottom > containerRect.bottom) {
           container.scrollTo({
             top: container.scrollTop + (rect.top - containerRect.top) - 100,
@@ -450,7 +477,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       }
     }
   };
-  
+
   // Get all text nodes in an element
   const getTextNodesIn = (node: Node): Text[] => {
     const textNodes: Text[] = [];
@@ -459,104 +486,104 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       NodeFilter.SHOW_TEXT,
       null
     );
-    
+
     let currentNode: Node | null = walker.nextNode();
     while (currentNode) {
       textNodes.push(currentNode as Text);
       currentNode = walker.nextNode();
     }
-    
+
     return textNodes;
   };
-  
+
   // Find next match
   const findNextMatch = () => {
     if (matches.length === 0) return;
-    
+
     const nextIndex = currentMatchIndex % matches.length + 1;
     setCurrentMatchIndex(nextIndex);
-    
+
     if (!isEditing) {
       scrollToMatch(matches[nextIndex - 1], lastSearchText.length);
     }
   };
-  
+
   // Find previous match
   const findPreviousMatch = () => {
     if (matches.length === 0) return;
-    
+
     const prevIndex = currentMatchIndex > 1 ? currentMatchIndex - 1 : matches.length;
     setCurrentMatchIndex(prevIndex);
-    
+
     if (!isEditing) {
       scrollToMatch(matches[prevIndex - 1], lastSearchText.length);
     }
   };
-  
+
   // Replace current match
   const replaceMatch = (replacement: string) => {
     if (matches.length === 0 || !note) return;
-    
+
     const matchIndex = matches[currentMatchIndex - 1];
     const matchLength = lastSearchText.length;
-    
+
     // Create the new content with the replacement
-    const newContent = 
-      note.content.substring(0, matchIndex) + 
-      replacement + 
+    const newContent =
+      note.content.substring(0, matchIndex) +
+      replacement +
       note.content.substring(matchIndex + matchLength);
-    
+
     // Update the content
     setEditedContent(newContent);
     saveContent(newContent);
-    
+
     // Update matches after replacement
     setTimeout(() => {
       findTextInContent(lastSearchText, lastSearchOptions);
     }, 100);
   };
-  
+
   // Replace all matches
   const replaceAllMatches = (replacement: string) => {
     if (matches.length === 0 || !note) return;
-    
+
     // Create a regex for the search
     let flags = 'g';
     if (!lastSearchOptions.caseSensitive) {
       flags += 'i';
     }
-    
+
     let regex: RegExp;
     if (lastSearchOptions.wholeWord) {
       regex = new RegExp(`\\b${escapeRegExp(lastSearchText)}\\b`, flags);
     } else {
       regex = new RegExp(escapeRegExp(lastSearchText), flags);
     }
-    
+
     // Replace all matches
     const newContent = note.content.replace(regex, replacement);
-    
+
     // Update the content
     setEditedContent(newContent);
     saveContent(newContent);
-    
+
     // Clear matches after replacing all
     setMatches([]);
     setCurrentMatchIndex(0);
   };
-  
+
   // Highlight matches in content
-  
+
   // Handle note link click
   const handleNoteLinkClick = async (noteTitle: string) => {
     if (!onSelectNote) return;
-    
+
     try {
       setError(null);
-      
+
       // Find the note by title
       const noteId = await invoke<string | null>('find_note_by_title', { title: noteTitle });
-      
+
       if (noteId) {
         // Navigate to the linked note
         onSelectNote(noteId);
@@ -567,7 +594,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       setError(`Failed to navigate to note: ${err}`);
     }
   };
-  
+
   /**
    * Opens a URL in the default browser
    * 
@@ -580,13 +607,13 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       setError(`Failed to open link: ${err}`);
     }
   };
-  
+
   /**
    * Regular expression to detect URLs in plain text
    * Matches http://, https://, www. URLs with improved pattern matching
    */
   const urlRegex = /(https?:\/\/[^\s<>]+)|(www\.[^\s<>]+\.[^\s<>]+)/g;
-  
+
   /**
    * Checks if a string is a valid URL
    * 
@@ -597,14 +624,14 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
     if (text.startsWith('http://') || text.startsWith('https://')) {
       return true;
     }
-    
+
     if (text.startsWith('www.')) {
       return true;
     }
-    
+
     return false;
   };
-  
+
   /**
    * Ensures a URL has a proper protocol
    * 
@@ -615,14 +642,14 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
-    
+
     if (url.startsWith('www.')) {
       return `https://${url}`;
     }
-    
+
     return url;
   };
-  
+
   /**
    * Render plain text with note links and external URLs
    * This improved version ensures consistent link detection and styling
@@ -632,14 +659,14 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
    */
   const renderPlainTextWithLinks = (content: string) => {
     if (!content) return null;
-    
+
     // No need to create a copy of the content
     const parts = [];
-    
+
     // Step 1: Extract all note links and replace with placeholders
     const noteLinkRegex = /\[\[(.*?)\]\]/g;
-    const noteLinks: {index: number, title: string, length: number}[] = [];
-    
+    const noteLinks: { index: number, title: string, length: number }[] = [];
+
     let match;
     while ((match = noteLinkRegex.exec(content)) !== null) {
       noteLinks.push({
@@ -648,18 +675,18 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
         length: match[0].length
       });
     }
-    
+
     // Step 2: Extract all URLs and replace with placeholders
     const urlMatches = [...content.matchAll(urlRegex)];
-    const urls: {index: number, url: string, length: number}[] = [];
-    
+    const urls: { index: number, url: string, length: number }[] = [];
+
     for (const match of urlMatches) {
       // Skip URLs that are part of note links
-      const isInsideNoteLink = noteLinks.some(link => 
-        match.index >= link.index && 
+      const isInsideNoteLink = noteLinks.some(link =>
+        match.index >= link.index &&
         match.index < link.index + link.length
       );
-      
+
       if (!isInsideNoteLink) {
         urls.push({
           index: match.index,
@@ -668,7 +695,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
         });
       }
     }
-    
+
     // Step 3: Sort all links by their position in the text
     const allLinks = [
       ...noteLinks.map(link => ({
@@ -684,10 +711,10 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
         length: url.length
       }))
     ].sort((a, b) => a.index - b.index);
-    
+
     // Step 4: Build the final content with all links properly handled
     let lastIndex = 0;
-    
+
     for (const link of allLinks) {
       // Add text before the link
       if (link.index > lastIndex) {
@@ -697,11 +724,11 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
           </span>
         );
       }
-      
+
       // Add the link with appropriate handler and styling
       if (link.type === 'note') {
         parts.push(
-          <span 
+          <span
             key={`note-link-${link.index}`}
             className="note-link"
             onClick={() => handleNoteLinkClick(link.content)}
@@ -713,7 +740,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
         );
       } else { // URL link
         parts.push(
-          <span 
+          <span
             key={`url-${link.index}`}
             className="external-link"
             onClick={() => handleExternalLinkClick(normalizeUrl(link.content))}
@@ -724,11 +751,11 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
           </span>
         );
       }
-      
+
       // Update lastIndex to after the link
       lastIndex = link.index + link.length;
     }
-    
+
     // Add remaining text after the last link
     if (lastIndex < content.length) {
       parts.push(
@@ -737,31 +764,31 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
         </span>
       );
     }
-    
+
     return parts.length > 0 ? parts : <span>{content}</span>;
   };
-  
-  
+
+
   // Custom component for ReactMarkdown to handle [[Note Title]] syntax and external links
   const MarkdownWithLinks = ({ content }: { content: string }) => {
-  // Process the content to handle [[Note Title]] patterns
-  // We'll replace [[Note Title]] with a custom link format that ReactMarkdown can process
-  const processedContent = content.replace(
-    /\[\[(.*?)\]\]/g, 
-    (_, noteTitle) => `[${noteTitle}](#note-link-${encodeURIComponent(noteTitle)})`
-  );
-    
+    // Process the content to handle [[Note Title]] patterns
+    // We'll replace [[Note Title]] with a custom link format that ReactMarkdown can process
+    const processedContent = content.replace(
+      /\[\[(.*?)\]\]/g,
+      (_, noteTitle) => `[${noteTitle}](#note-link-${encodeURIComponent(noteTitle)})`
+    );
+
     return (
       <ReactMarkdown
         components={{
           a: ({ node, ...props }) => {
             const href = props.href || '';
-            
+
             // Check if this is one of our note links
             if (href.startsWith('#note-link-')) {
               const noteTitle = decodeURIComponent(href.substring('#note-link-'.length));
               return (
-                <span 
+                <span
                   className="note-link"
                   onClick={() => handleNoteLinkClick(noteTitle)}
                   style={{ color: '#0366d6', cursor: 'pointer', textDecoration: 'underline' }}
@@ -771,11 +798,11 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                 </span>
               );
             }
-            
+
             // External link handling - open in default browser
             if (isValidUrl(href)) {
               return (
-                <span 
+                <span
                   className="external-link"
                   onClick={() => handleExternalLinkClick(href)}
                   style={{ color: '#0366d6', cursor: 'pointer', textDecoration: 'underline' }}
@@ -785,7 +812,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                 </span>
               );
             }
-            
+
             // Regular link handling for other links
             return <a {...props} />;
           }
@@ -795,7 +822,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       </ReactMarkdown>
     );
   };
-  
+
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -824,9 +851,9 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
         findPreviousMatch();
       }
     };
-    
+
     document.addEventListener('keydown', handleKeyDown);
-    
+
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
@@ -854,7 +881,11 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       {/* Find and Replace Panel */}
       <FindReplacePanel
         isVisible={findReplaceVisible}
-        onClose={() => setFindReplaceVisible(false)}
+        onClose={() => {
+          setFindReplaceVisible(false);
+          clearSearchState();
+        }}
+        onClearSearch={clearSearchState}
         onFind={findTextInContent}
         onFindNext={findNextMatch}
         onFindPrevious={findPreviousMatch}
@@ -879,8 +910,8 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
           </div>
         ) : (
           <div className="note-title-container">
-            <h1 
-              className="note-title editable" 
+            <h1
+              className="note-title editable"
               onClick={() => {
                 if (!isRenamingTitle && !loading && note) {
                   setIsRenamingTitle(true);
@@ -895,7 +926,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
             </h1>
           </div>
         )}
-        
+
         <div className="note-meta">
           <div className="note-dates">
             <span className="note-date">
@@ -920,8 +951,8 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
               {isSaving && <span className="autosave-indicator">Saving...</span>}
             </div>
           ) : (
-            <div 
-              className="note-path editable" 
+            <div
+              className="note-path editable"
               onClick={() => {
                 if (!isEditingPath && !loading && note) {
                   setIsEditingPath(true);
@@ -938,8 +969,8 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
           {note.tags.length > 0 && (
             <div className="note-tags">
               {note.tags.map(tag => (
-                <span 
-                  key={tag} 
+                <span
+                  key={tag}
                   className="note-tag clickable"
                   onClick={() => onTagClick && onTagClick(tag)}
                   title="Click to filter by this tag"
@@ -951,7 +982,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
           )}
         </div>
       </div>
-      
+
       {error && (
         <div className="error-message">
           {error}
@@ -960,10 +991,10 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
           </button>
         </div>
       )}
-      
+
       <div className="note-viewer-content" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-        <div 
-          className="note-content" 
+        <div
+          className="note-content"
           onClick={() => {
             if (!isEditing && !loading && note) {
               setIsEditing(true);
@@ -992,17 +1023,17 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
             </div>
           ) : (
             <pre className="plain-text-content editable">
-              {!isEditing && matches.length > 0 ? (
+              {!isEditing && matches.length > 0 && lastSearchText ? (
                 <>
                   {(() => {
                     let result = [];
                     let lastIndex = 0;
-                    
+
                     // Process each match
                     for (let i = 0; i < matches.length; i++) {
                       const position = matches[i];
                       const isCurrentMatch = i === currentMatchIndex - 1;
-                      
+
                       // Add text before the match
                       if (position > lastIndex) {
                         result.push(
@@ -1011,21 +1042,21 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                           </span>
                         );
                       }
-                      
+
                       // Add the match with appropriate highlighting
                       result.push(
-                        <span 
-                          key={`match-${i}`} 
+                        <span
+                          key={`match-${i}`}
                           className={`highlight-match${isCurrentMatch ? ' current' : ''}`}
                         >
                           {note.content.substring(position, position + lastSearchText.length)}
                         </span>
                       );
-                      
+
                       // Update last index
                       lastIndex = position + lastSearchText.length;
                     }
-                    
+
                     // Add remaining text after the last match
                     if (lastIndex < note.content.length) {
                       result.push(
@@ -1034,7 +1065,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                         </span>
                       );
                     }
-                    
+
                     return result;
                   })()}
                 </>
@@ -1044,7 +1075,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
             </pre>
           )}
         </div>
-        
+
         {/* Backlinks section */}
         {backlinksLoading ? (
           <div className="backlinks-section">
@@ -1057,7 +1088,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
             <ul className="backlinks-list">
               {backlinks.map(link => (
                 <li key={link.id} className="backlink-item">
-                  <span 
+                  <span
                     className="backlink-title note-link"
                     onClick={() => onSelectNote && onSelectNote(link.id)}
                   >
