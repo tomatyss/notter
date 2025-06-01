@@ -20,6 +20,10 @@ const BacklinksSection = lazy(() => import('./noteViewer/BacklinksSection').then
   default: module.BacklinksSection
 })));
 
+const SubnotesSection = lazy(() => import('./noteViewer/SubnotesSection').then(module => ({
+  default: module.SubnotesSection
+})));
+
 /**
  * Props for the OptimizedNoteViewer component
  */
@@ -270,6 +274,15 @@ export const OptimizedNoteViewer: React.FC<OptimizedNoteViewerProps> = ({
             onSelectNote={onSelectNote}
           />
         </Suspense>
+        
+        {note && (
+          <Suspense fallback={<div className="loading-subnotes">Loading subnotes...</div>}>
+            <SubnotesSection
+              noteId={note.id}
+              onSelectNote={onSelectNote}
+            />
+          </Suspense>
+        )}
       </div>
     </div>
   );

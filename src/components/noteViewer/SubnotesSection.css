@@ -1,0 +1,200 @@
+/* Subnotes section - matches backlinks section styling */
+.subnotes-section {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.subnotes-section h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  color: var(--secondary-color);
+}
+
+.subnotes-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.subnote-item {
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border: 1px solid var(--border-color);
+  background-color: white;
+}
+
+.subnote-item:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.subnote-item:last-child {
+  margin-bottom: 0;
+}
+
+/* Depth-based styling - similar to note list selected state */
+.subnote-item.depth-1 {
+  border-left: 3px solid var(--primary-color);
+}
+
+.subnote-item.depth-2 {
+  margin-left: 1rem;
+  border-left: 3px solid var(--success-color);
+}
+
+.subnote-item.depth-3 {
+  margin-left: 2rem;
+  border-left: 3px solid #ffc107;
+}
+
+.subnote-item.depth-4 {
+  margin-left: 3rem;
+  border-left: 3px solid var(--error-color);
+}
+
+.subnote-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.subnote-title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-color);
+  flex: 1;
+}
+
+.subnote-depth {
+  font-size: 0.75rem;
+  color: #666;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.subnote-preview {
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.4;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 4px;
+  border-left: 2px solid var(--border-color);
+}
+
+.subnote-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.subnote-modified {
+  font-style: italic;
+}
+
+.subnote-tags {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.subnote-tag {
+  font-size: 0.75rem;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  margin: 0.1rem;
+  display: inline-block;
+}
+
+.error-message {
+  padding: 0.5rem;
+  background-color: rgba(231, 76, 60, 0.1);
+  color: var(--error-color);
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+/* Loading state */
+.subnotes-section .loading-spinner {
+  padding: 1rem 0;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .subnote-item {
+    background-color: #2a2a2a;
+    border-color: #444;
+  }
+  
+  .subnote-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  .subnote-title {
+    color: #f0f0f0;
+  }
+  
+  .subnote-depth {
+    color: #bbb;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .subnote-preview {
+    color: #bbb;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-left: 2px solid #444;
+  }
+  
+  .subnote-meta {
+    color: #999;
+  }
+  
+  .subnote-tag {
+    background-color: #333;
+    color: #ddd;
+  }
+  
+  .error-message {
+    background-color: rgba(231, 76, 60, 0.2);
+    color: #ff6b6b;
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .subnote-item.depth-2 {
+    margin-left: 0.5rem;
+  }
+  
+  .subnote-item.depth-3 {
+    margin-left: 1rem;
+  }
+  
+  .subnote-item.depth-4 {
+    margin-left: 1.5rem;
+  }
+  
+  .subnote-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .subnote-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

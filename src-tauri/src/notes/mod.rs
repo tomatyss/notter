@@ -10,6 +10,9 @@ use regex::Regex;
 #[cfg(target_os = "ios")]
 use std::sync::Arc;
 
+mod subnotes;
+pub use subnotes::SubnoteInfo;
+
 /// Options for sorting notes
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SortOption {

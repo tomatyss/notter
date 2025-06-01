@@ -47,6 +47,14 @@ pub struct AppConfig {
     /// Interval for periodic index rebuilds (in minutes)
     #[serde(default = "default_update_interval")]
     pub auto_update_interval: u32,
+
+    /// Pattern for subnotes
+    #[serde(default)]
+    pub subnote_pattern: Option<String>,
+
+    /// Whether to enable subnotes display
+    #[serde(default)]
+    pub enable_subnotes: bool,
 }
 
 /// Default update interval (30 minutes)
@@ -67,6 +75,8 @@ impl Default for AppConfig {
             auto_update_search_index: true,
             auto_update_mode: AutoUpdateMode::Incremental,
             auto_update_interval: 30,
+            subnote_pattern: Some("{parent}{letter}".to_string()),
+            enable_subnotes: true,
         }
     }
 }
