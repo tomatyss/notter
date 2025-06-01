@@ -87,6 +87,39 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   const titleRef = useRef<HTMLHeadingElement>(null);
   const pathRef = useRef<HTMLDivElement>(null);
 
+  // Find and replace state
+  const [findReplaceVisible, setFindReplaceVisible] = useState(false);
+  const [matches, setMatches] = useState<number[]>([]);
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+  const [lastSearchText, setLastSearchText] = useState('');
+  const [lastSearchOptions, setLastSearchOptions] = useState<FindOptions>({
+    caseSensitive: false,
+    wholeWord: false
+  });
+
+  // Clear search state
+  const clearSearchState = useCallback(() => {
+    setMatches([]);
+    setCurrentMatchIndex(0);
+    setLastSearchText('');
+    setLastSearchOptions({
+      caseSensitive: false,
+      wholeWord: false
+    });
+
+    // Clear any text selection
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+    }
+
+    // Force re-render to clear highlights by triggering a state update
+    // This ensures the highlighting logic in the render method sees empty matches
+    setTimeout(() => {
+      // This timeout ensures the state update happens after the current render cycle
+    }, 0);
+  }, []);
+
   // Reset states when note changes
   useEffect(() => {
     if (note) {
@@ -145,39 +178,6 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
         clearTimeout(pathAutosaveTimerRef.current);
       }
     };
-  }, []);
-
-  // Find and replace state
-  const [findReplaceVisible, setFindReplaceVisible] = useState(false);
-  const [matches, setMatches] = useState<number[]>([]);
-  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
-  const [lastSearchText, setLastSearchText] = useState('');
-  const [lastSearchOptions, setLastSearchOptions] = useState<FindOptions>({
-    caseSensitive: false,
-    wholeWord: false
-  });
-
-  // Clear search state
-  const clearSearchState = useCallback(() => {
-    setMatches([]);
-    setCurrentMatchIndex(0);
-    setLastSearchText('');
-    setLastSearchOptions({
-      caseSensitive: false,
-      wholeWord: false
-    });
-
-    // Clear any text selection
-    const selection = window.getSelection();
-    if (selection) {
-      selection.removeAllRanges();
-    }
-
-    // Force re-render to clear highlights by triggering a state update
-    // This ensures the highlighting logic in the render method sees empty matches
-    setTimeout(() => {
-      // This timeout ensures the state update happens after the current render cycle
-    }, 0);
   }, []);
 
   // Handle content changes - only save on blur, not during typing
