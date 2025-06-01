@@ -203,3 +203,18 @@ export interface SearchResult {
    */
   score: number;
 }
+
+/**
+ * Information about a subnote with hierarchy depth
+ */
+export interface SubnoteInfo {
+  /**
+   * The note summary
+   */
+  note: NoteSummary;
+  
+  /**
+   * Depth in the hierarchy (1 = direct child, 2 = grandchild, etc.)
+   */
+  depth: number;
+}

@@ -674,6 +674,27 @@ async fn find_backlinks(
         .map_err(|e| e.to_string())
 }
 
+/// Gets all subnotes for a parent note
+///
+/// # Parameters
+/// * `parent_id` - ID of the parent note
+///
+/// # Returns
+/// List of subnotes with their hierarchy depth
+#[tauri::command]
+async fn get_subnotes(
+    parent_id: String,
+    state: State<'_, AppState>,
+) -> Result<Vec<notes::SubnoteInfo>, String> {
+    let note_manager_lock = state.note_manager.lock().map_err(|e| e.to_string())?;
+
+    let Some(note_manager) = note_manager_lock.as_ref() else {
+        return Err("Note manager not initialized".into());
+    };
+
+    note_manager.get_subnotes(&parent_id).map_err(|e| e.to_string())
+}
+
 /// Rebuilds the search index with all notes
 ///
 /// # Returns
@@ -885,6 +906,7 @@ pub fn run() {
             filter_notes_by_tags,
             find_note_by_title,
             find_backlinks,
+            get_subnotes,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
