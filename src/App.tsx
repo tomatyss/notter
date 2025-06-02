@@ -11,6 +11,7 @@ import { Icon, IconName } from "./components/common";
 import { AppConfig, Note, NoteSummary, SortOption } from "./types";
 import { useNewNoteShortcut } from "./hooks/useNewNoteShortcut";
 import { useCachedNotes } from "./hooks/useCachedNotes";
+import { useNavigationHistory } from "./hooks/useNavigationHistory";
 import "./App.css";
 
 // Lazy load the ChatPanel component
@@ -64,6 +65,14 @@ function App() {
     loadNote,
     invalidateCache
   } = useCachedNotes();
+
+  // Use the navigation history hook
+  const {
+    pushToHistory,
+    goBack,
+    canGoBack,
+    getPreviousEntry
+  } = useNavigationHistory();
 
   // Set error from note loading
   useEffect(() => {
@@ -209,6 +218,22 @@ function App() {
     
     // Load the note content using the cached notes hook
     await loadNote(id);
+    
+    // Add to navigation history
+    const noteTitle = notes.find(note => note.id === id)?.title || selectedNote?.title;
+    pushToHistory(id, noteTitle);
+  };
+
+  // Handle back navigation
+  const handleGoBack = async () => {
+    const previousNoteId = goBack();
+    if (previousNoteId) {
+      // Update the selected note ID
+      setSelectedNoteId(previousNoteId);
+      
+      // Load the note content
+      await loadNote(previousNoteId);
+    }
   };
   
   // Handle note content update
@@ -429,6 +454,10 @@ function App() {
               onNotePathChange={handleNoteMoveToPath}
               onTagClick={handleTagClick}
               onSelectNote={handleSelectNote}
+              showBackButton={canGoBack()}
+              backButtonDisabled={noteLoading}
+              onBackClick={handleGoBack}
+              backButtonTooltip={canGoBack() ? `Back to ${getPreviousEntry()?.title || 'previous note'}` : undefined}
             />
             
             {/* Chat toggle button */}

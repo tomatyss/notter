@@ -1,6 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { Note } from '../../types';
+import { BackButton } from '../common';
 
 /**
  * Props for the NoteHeader component
@@ -80,6 +81,26 @@ interface NoteHeaderProps {
    * Callback when a tag is clicked
    */
   onTagClick?: (tag: string) => void;
+  
+  /**
+   * Whether the back button should be shown
+   */
+  showBackButton?: boolean;
+  
+  /**
+   * Whether the back button is disabled
+   */
+  backButtonDisabled?: boolean;
+  
+  /**
+   * Callback when back button is clicked
+   */
+  onBackClick?: () => void;
+  
+  /**
+   * Tooltip text for the back button
+   */
+  backButtonTooltip?: string;
 }
 
 /**
@@ -103,7 +124,11 @@ export const NoteHeader: React.FC<NoteHeaderProps> = ({
   onPathKeyPress,
   onTitleDoubleClick,
   onPathDoubleClick,
-  onTagClick
+  onTagClick,
+  showBackButton = false,
+  backButtonDisabled = false,
+  onBackClick,
+  backButtonTooltip
 }) => {
   return (
     <div className="note-header">
@@ -123,6 +148,17 @@ export const NoteHeader: React.FC<NoteHeaderProps> = ({
         </div>
       ) : (
         <div className="note-title-container">
+          {/* Back Button */}
+          {showBackButton && (
+            <BackButton
+              disabled={backButtonDisabled}
+              onClick={onBackClick}
+              tooltip={backButtonTooltip}
+              size="medium"
+              className="note-header-back-button"
+            />
+          )}
+          
           <h1 
             className="note-title editable" 
             onDoubleClick={onTitleDoubleClick}

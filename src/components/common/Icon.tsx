@@ -13,6 +13,7 @@ export enum IconName {
   ChevronRight = 'chevron-right',
   ChevronDown = 'chevron-down',
   ChevronUp = 'chevron-up',
+  ArrowLeft = 'arrow-left',
 }
 
 /**
@@ -151,6 +152,15 @@ export const Icon: React.FC<IconProps> = ({
         <svg {...svgProps}>
           {title && <title>{title}</title>}
           <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+      );
+      
+    case IconName.ArrowLeft:
+      return (
+        <svg {...svgProps}>
+          {title && <title>{title}</title>}
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
       );
       
