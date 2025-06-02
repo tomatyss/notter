@@ -19,7 +19,7 @@
     "@types/lodash": "^4.17.17",
     "date-fns": "^4.1.0",
     "lodash": "^4.17.21",
-    "ollama": "^0.5.15",
+    "ollama": "^0.5.16",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-markdown": "^10.1.0",
