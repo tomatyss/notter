@@ -14,6 +14,7 @@ export enum IconName {
   ChevronDown = 'chevron-down',
   ChevronUp = 'chevron-up',
   ArrowLeft = 'arrow-left',
+  SubnoteAdd = 'subnote-add',
 }
 
 /**
@@ -161,6 +162,21 @@ export const Icon: React.FC<IconProps> = ({
           {title && <title>{title}</title>}
           <line x1="19" y1="12" x2="5" y2="12"></line>
           <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      );
+      
+    case IconName.SubnoteAdd:
+      return (
+        <svg {...svgProps}>
+          {title && <title>{title}</title>}
+          {/* Plus symbol */}
+          <line x1="12" y1="8" x2="12" y2="16"></line>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+          {/* Branching lines suggesting hierarchy */}
+          <path d="M6 6L12 12" className="subnote-branch subnote-branch-1"></path>
+          <path d="M18 6L12 12" className="subnote-branch subnote-branch-2"></path>
+          <path d="M6 18L12 12" className="subnote-branch subnote-branch-3"></path>
+          <path d="M18 18L12 12" className="subnote-branch subnote-branch-4"></path>
         </svg>
       );
       

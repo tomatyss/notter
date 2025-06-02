@@ -307,7 +307,14 @@ export const OptimizedNoteViewer: React.FC<OptimizedNoteViewerProps> = ({
           <Suspense fallback={<div className="loading-subnotes">Loading subnotes...</div>}>
             <SubnotesSection
               noteId={note.id}
+              currentNote={note}
               onSelectNote={onSelectNote}
+              onSubnoteCreated={(newNote) => {
+                // Navigate to the newly created subnote
+                if (onSelectNote) {
+                  onSelectNote(newNote.id);
+                }
+              }}
             />
           </Suspense>
         )}
