@@ -71,8 +71,7 @@ function App() {
     pushToHistory,
     goBack,
     canGoBack,
-    getPreviousEntry,
-    updateEntryTitle
+    getPreviousEntry
   } = useNavigationHistory();
 
   // Set error from note loading
