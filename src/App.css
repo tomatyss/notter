@@ -933,8 +933,15 @@ body {
 .note-title-container {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 0.75rem;
   margin-bottom: 0.5rem;
+}
+
+/* Back button in note header */
+.note-header-back-button {
+  flex-shrink: 0;
+  margin-right: 0.25rem;
 }
 
 .note-header h1 {

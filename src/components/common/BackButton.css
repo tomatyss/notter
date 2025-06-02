@@ -1,0 +1,283 @@
+/* Back Button Container */
+.back-button-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Base Back Button Styles */
+.back-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #666;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  outline: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  
+  /* Subtle shadow for depth */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  
+  /* Initial state - slightly transparent */
+  opacity: 0.7;
+  transform: scale(1);
+}
+
+/* Size Variants */
+.back-button--small {
+  border-radius: 6px;
+}
+
+.back-button--medium {
+  border-radius: 8px;
+}
+
+.back-button--large {
+  border-radius: 10px;
+}
+
+/* Hover State */
+.back-button:hover:not(.back-button--disabled):not(.back-button--loading) {
+  opacity: 1;
+  color: var(--primary-color, #3498db);
+  background-color: rgba(52, 152, 219, 0.08);
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.15);
+}
+
+/* Pressed State */
+.back-button--pressed:not(.back-button--disabled):not(.back-button--loading) {
+  transform: scale(0.95);
+  background-color: rgba(52, 152, 219, 0.12);
+}
+
+/* Focus State */
+.back-button:focus-visible {
+  outline: 2px solid var(--primary-color, #3498db);
+  outline-offset: 2px;
+}
+
+/* Disabled State */
+.back-button--disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  color: #999;
+  transform: scale(1) !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Loading State */
+.back-button--loading {
+  cursor: wait;
+  color: var(--primary-color, #3498db);
+}
+
+/* Icon Styles */
+.back-button__icon {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2;
+  position: relative;
+}
+
+.back-button:hover:not(.back-button--disabled):not(.back-button--loading) .back-button__icon {
+  transform: translateX(-1px);
+}
+
+/* Loading Spinner */
+.back-button__spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(52, 152, 219, 0.2);
+  border-top: 2px solid var(--primary-color, #3498db);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Ripple Effect */
+.back-button__ripple {
+  position: absolute;
+  border-radius: 50%;
+  background-color: rgba(52, 152, 219, 0.3);
+  transform: translate(-50%, -50%) scale(0);
+  animation: ripple 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes ripple {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(4);
+    opacity: 0;
+  }
+}
+
+/* Tooltip Styles */
+.back-button-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  
+  /* Smooth appearance */
+  animation: tooltip-appear 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Subtle shadow */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.back-button-tooltip__arrow {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid rgba(0, 0, 0, 0.9);
+}
+
+@keyframes tooltip-appear {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .back-button {
+    /* Slightly larger touch targets on mobile */
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .back-button--small {
+    min-width: 36px;
+    min-height: 36px;
+  }
+  
+  .back-button--large {
+    min-width: 52px;
+    min-height: 52px;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .back-button {
+    color: #bbb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+  
+  .back-button:hover:not(.back-button--disabled):not(.back-button--loading) {
+    color: var(--primary-color, #3498db);
+    background-color: rgba(52, 152, 219, 0.15);
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.25);
+  }
+  
+  .back-button--pressed:not(.back-button--disabled):not(.back-button--loading) {
+    background-color: rgba(52, 152, 219, 0.2);
+  }
+  
+  .back-button--disabled {
+    color: #555;
+  }
+  
+  .back-button-tooltip {
+    background-color: rgba(40, 40, 40, 0.95);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+  
+  .back-button-tooltip__arrow {
+    border-top-color: rgba(40, 40, 40, 0.95);
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .back-button {
+    border: 1px solid currentColor;
+  }
+  
+  .back-button:hover:not(.back-button--disabled):not(.back-button--loading) {
+    background-color: currentColor;
+    color: white;
+  }
+  
+  .back-button--disabled {
+    border-color: #999;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .back-button,
+  .back-button__icon,
+  .back-button-tooltip {
+    transition: none;
+    animation: none;
+  }
+  
+  .back-button:hover:not(.back-button--disabled):not(.back-button--loading) {
+    transform: none;
+  }
+  
+  .back-button--pressed:not(.back-button--disabled):not(.back-button--loading) {
+    transform: none;
+  }
+  
+  .back-button__ripple {
+    display: none;
+  }
+  
+  .spinner {
+    animation: none;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .back-button {
+    display: none;
+  }
+}

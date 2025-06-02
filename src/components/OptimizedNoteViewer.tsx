@@ -62,6 +62,26 @@ interface OptimizedNoteViewerProps {
    * Callback when a note is selected
    */
   onSelectNote?: (id: string) => void;
+  
+  /**
+   * Whether the back button should be shown
+   */
+  showBackButton?: boolean;
+  
+  /**
+   * Whether the back button is disabled
+   */
+  backButtonDisabled?: boolean;
+  
+  /**
+   * Callback when back button is clicked
+   */
+  onBackClick?: () => void;
+  
+  /**
+   * Tooltip text for the back button
+   */
+  backButtonTooltip?: string;
 }
 
 /**
@@ -78,7 +98,11 @@ export const OptimizedNoteViewer: React.FC<OptimizedNoteViewerProps> = ({
   onNoteRename,
   onNotePathChange,
   onTagClick,
-  onSelectNote
+  onSelectNote,
+  showBackButton,
+  backButtonDisabled,
+  onBackClick,
+  backButtonTooltip
 }) => {
   // Content ref for scrolling and highlighting
   const contentRef = useRef<HTMLDivElement>(null);
@@ -234,6 +258,10 @@ export const OptimizedNoteViewer: React.FC<OptimizedNoteViewerProps> = ({
         onTitleDoubleClick={handleTitleDoubleClick}
         onPathDoubleClick={handlePathDoubleClick}
         onTagClick={onTagClick}
+        showBackButton={showBackButton}
+        backButtonDisabled={backButtonDisabled}
+        onBackClick={onBackClick}
+        backButtonTooltip={backButtonTooltip}
       />
       
       {/* Error Message */}
