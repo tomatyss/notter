@@ -63,7 +63,6 @@ function App() {
     noteLoading,
     error: noteError,
     loadNote,
-    invalidateCache,
     updateNote
   } = useCachedNotes();
 
