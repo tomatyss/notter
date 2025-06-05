@@ -148,6 +148,16 @@ export const useCachedNotes = () => {
   const clearCache = useCallback((): void => {
     noteCache.clear();
   }, []);
+
+  /**
+   * Updates the currently selected note and refreshes the cache
+   *
+   * @param note The updated note
+   */
+  const updateNote = useCallback((note: Note): void => {
+    setSelectedNote(note);
+    addToCache(note);
+  }, [addToCache]);
   
   // Clean up on unmount
   useEffect(() => {
@@ -162,6 +172,7 @@ export const useCachedNotes = () => {
     error,
     loadNote,
     invalidateCache,
-    clearCache
+    clearCache,
+    updateNote
   };
 };
