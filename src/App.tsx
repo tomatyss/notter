@@ -63,7 +63,8 @@ function App() {
     noteLoading,
     error: noteError,
     loadNote,
-    invalidateCache
+    invalidateCache,
+    updateNote
   } = useCachedNotes();
 
   // Use the navigation history hook
@@ -247,19 +248,16 @@ function App() {
       
       // Update note content
       const updatedNote = await invoke<Note>('update_note_content', { id, content });
-      
+
       // Verify that the selected ID hasn't changed during the update
       if (id === selectedNoteId) {
-        // Invalidate the cache for this note
-        invalidateCache(id);
-        
-        // Reload the note to update the cache
-        await loadNote(id);
-        
+        // Update the cached note directly to avoid reload
+        updateNote(updatedNote);
+
         // Update the note in the notes list in the background
         setTimeout(() => {
-          setNotes(prevNotes => 
-            prevNotes.map(note => 
+          setNotes(prevNotes =>
+            prevNotes.map(note =>
               note.id === id 
                 ? { 
                     ...note, 
@@ -292,14 +290,11 @@ function App() {
       // Rename the note
       const updatedNote = await invoke<Note>('rename_note', { id, newName });
       
-      // Invalidate the cache for this note
-      invalidateCache(id);
-      
       // Update the selected note ID (might have changed due to path change)
       setSelectedNoteId(updatedNote.id);
-      
-      // Reload the note to update the cache
-      await loadNote(updatedNote.id);
+
+      // Update the cached note directly
+      updateNote(updatedNote);
       
       // Update the note in the notes list
       // We'll do this in the background to avoid UI refresh during editing
@@ -327,14 +322,11 @@ function App() {
       // Move the note to the new path
       const updatedNote = await invoke<Note>('move_note', { id, newPath });
       
-      // Invalidate the cache for this note
-      invalidateCache(id);
-      
       // Update the selected note ID (might have changed due to path change)
       setSelectedNoteId(updatedNote.id);
-      
-      // Reload the note to update the cache
-      await loadNote(updatedNote.id);
+
+      // Update the cached note directly
+      updateNote(updatedNote);
       
       // Update the note in the notes list
       // We'll do this in the background to avoid UI refresh during editing

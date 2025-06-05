@@ -415,7 +415,9 @@ export const NoteContent: React.FC<NoteContentProps> = ({
             style={editorHeight ? { height: editorHeight } : undefined}
             autoFocus
           />
-          {isSaving && <span className="autosave-indicator">Saving...</span>}
+          <div className="editor-status">
+            {isSaving && <span className="autosave-indicator">Saving...</span>}
+          </div>
         </>
       ) : note.file_type === NoteType.Markdown ? (
         <div className="markdown-content editable">
