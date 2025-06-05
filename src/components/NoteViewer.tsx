@@ -984,7 +984,11 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                 className="content-editor"
                 autoFocus
               />
-              {isSaving && <span className="autosave-indicator">Saving...</span>}
+              <div className="editor-status">
+                {isSaving && (
+                  <span className="autosave-indicator">Saving...</span>
+                )}
+              </div>
             </div>
           ) : note.file_type === NoteType.Markdown ? (
             <div className="markdown-content editable">
