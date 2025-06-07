@@ -210,8 +210,9 @@ export const AddSubnoteButton: React.FC<AddSubnoteButtonProps> = ({
       // Create the full title with suggested ID
       const fullTitle = `${suggestedId}-${title.trim()}`;
       
-      // Use the naming pattern from config or default
-      const pattern = config?.note_naming_pattern || "{number}-{title}.{extension}";
+      // Subnotes should not include an auto-incremented number prefix.
+      // Always generate the filename directly from the provided title.
+      const pattern = "{title}.{extension}";
       
       // Create the subnote
       const newNote = await invoke<Note>('create_note', {
