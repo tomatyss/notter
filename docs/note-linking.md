@@ -89,9 +89,9 @@ For the most effective use of note linking:
 
 ## Future Enhancements
 
-Planned enhancements for the note linking feature include:
+- Future enhancements for the note linking feature include:
 
-- Autocomplete when typing `[[` to suggest existing note titles
+- ~~Autocomplete when typing `[[` to suggest existing note titles~~ *(implemented)*
 - Visual graph of note connections
 - Link preview on hover
 - Support for linking to specific sections within notes

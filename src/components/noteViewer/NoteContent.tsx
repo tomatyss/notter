@@ -1,8 +1,11 @@
-import React, { RefObject, useEffect, useRef, useState } from 'react';
+import React, { RefObject, useEffect, useRef, useState, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Note, NoteType } from '../../types';
+import { Note, NoteType, SearchResult } from '../../types';
 import { createMatchSegments, noteLinkRegex, urlRegex, isValidUrl, normalizeUrl, getTextNodesIn } from '../../utils/textUtils';
 import { AutoResizeTextarea } from '../common/AutoResizeTextarea';
+import { NoteLinkAutocomplete } from './NoteLinkAutocomplete';
+import { invoke } from '@tauri-apps/api/core';
+import { debounce } from 'lodash';
 
 /**
  * Props for the NoteContent component
@@ -82,6 +85,11 @@ interface NoteContentProps {
    * Callback when an external link is clicked
    */
   onExternalLinkClick: (url: string) => void;
+
+  /**
+   * Setter for edited content
+   */
+  setEditedContent: (content: string) => void;
 }
 
 /**
@@ -105,12 +113,53 @@ export const NoteContent: React.FC<NoteContentProps> = ({
   onContentDoubleClick,
   textareaRef,
   onNoteLinkClick,
-  onExternalLinkClick
+  onExternalLinkClick,
+  setEditedContent
 }) => {
   // Store the scroll position to maintain it between view/edit mode switches
   const scrollPositionRef = useRef<number>(0);
   // Capture the editor height when switching to edit mode so it stays constant
   const [editorHeight, setEditorHeight] = useState<number>();
+
+  // Autocomplete state
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [autocompleteQuery, setAutocompleteQuery] = useState('');
+  const [autocompleteStart, setAutocompleteStart] = useState<number | null>(null);
+  const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
+
+  // Debounced search for note titles
+  const debouncedSearch = useCallback(
+    debounce(async (q: string) => {
+      if (!q.trim()) {
+        setSuggestions([]);
+        return;
+      }
+
+      try {
+        const res = await invoke<SearchResult[]>('search_notes', {
+          query: q,
+          limit: 20
+        });
+        setSuggestions(res);
+      } catch (err) {
+        console.error('Autocomplete search failed:', err);
+        setSuggestions([]);
+      }
+    }, 200),
+    []
+  );
+
+  useEffect(() => {
+    if (showAutocomplete) {
+      debouncedSearch(autocompleteQuery);
+    }
+
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [autocompleteQuery, showAutocomplete, debouncedSearch]);
 
   // Save scroll position when switching modes
   useEffect(() => {
@@ -142,6 +191,29 @@ export const NoteContent: React.FC<NoteContentProps> = ({
   
   // Custom key down handler to preserve scroll position
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (showAutocomplete) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIndex(i => Math.min(i + 1, suggestions.length - 1));
+        return;
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex(i => Math.max(i - 1, 0));
+        return;
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const choice = suggestions[selectedIndex];
+        if (choice) {
+          insertLink(choice.note.title);
+        }
+        return;
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowAutocomplete(false);
+        return;
+      }
+    }
+
     // Check for Ctrl+Enter or Cmd+Enter to save and exit, or Escape to cancel
     if ((e.key === 'Enter' && (e.ctrlKey || e.metaKey)) || e.key === 'Escape') {
       // Save the current scroll position before switching modes
@@ -161,10 +233,55 @@ export const NoteContent: React.FC<NoteContentProps> = ({
       if (contentRef.current) {
         scrollPositionRef.current = contentRef.current.scrollTop;
       }
-      
+
       const position = calculateTextPosition(e);
       onContentDoubleClick(position);
     }
+  };
+
+  // Handle textarea changes to manage autocomplete
+  const handleEditorChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onContentChange(e);
+    if (!textareaRef?.current) return;
+
+    const value = e.target.value;
+    const pos = e.target.selectionStart;
+
+    if (!showAutocomplete) {
+      if (value.slice(pos - 2, pos) === '[[') {
+        setShowAutocomplete(true);
+        setAutocompleteStart(pos);
+        setAutocompleteQuery('');
+        setSelectedIndex(0);
+        setDropdownPos(getCaretCoordinates(e.target, pos));
+      }
+    } else if (autocompleteStart !== null) {
+      if (pos < autocompleteStart) {
+        setShowAutocomplete(false);
+      } else {
+        const text = value.substring(autocompleteStart, pos);
+        if (text.includes(']]') || text.includes('\n')) {
+          setShowAutocomplete(false);
+        } else {
+          setAutocompleteQuery(text);
+        }
+      }
+    }
+  };
+
+  const insertLink = (title: string) => {
+    if (!textareaRef?.current || autocompleteStart === null) return;
+    const end = textareaRef.current.selectionStart;
+    const before = editedContent.substring(0, autocompleteStart);
+    const after = editedContent.substring(end);
+    const newContent = `${before}${title}]]${after}`;
+    setEditedContent(newContent);
+    setShowAutocomplete(false);
+    const newPos = before.length + title.length + 2;
+    setTimeout(() => {
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(newPos, newPos);
+    }, 0);
   };
   /**
    * Render plain text with note links and external URLs
@@ -393,6 +510,29 @@ export const NoteContent: React.FC<NoteContentProps> = ({
     
     return totalOffset;
   };
+
+  // Calculate caret coordinates within the textarea
+  const getCaretCoordinates = (textarea: HTMLTextAreaElement, pos: number) => {
+    const style = getComputedStyle(textarea);
+    const div = document.createElement('div');
+    div.style.position = 'absolute';
+    div.style.visibility = 'hidden';
+    div.style.whiteSpace = 'pre-wrap';
+    div.style.wordWrap = 'break-word';
+    div.style.font = style.font;
+    div.style.padding = style.padding;
+    div.style.lineHeight = style.lineHeight;
+    div.style.width = style.width;
+    div.textContent = textarea.value.substring(0, pos);
+    const span = document.createElement('span');
+    span.textContent = '\u200b';
+    div.appendChild(span);
+    document.body.appendChild(div);
+    const rect = span.getBoundingClientRect();
+    const taRect = textarea.getBoundingClientRect();
+    document.body.removeChild(div);
+    return { top: rect.top - taRect.top + textarea.scrollTop + 20, left: rect.left - taRect.left + textarea.scrollLeft };
+  };
   
 
   return (
@@ -404,19 +544,29 @@ export const NoteContent: React.FC<NoteContentProps> = ({
     >
       {isEditing ? (
         <>
-          <AutoResizeTextarea
-            ref={textareaRef}
-            value={editedContent}
-            onChange={onContentChange}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
-            className="content-editor"
-            autoResize={false}
-            style={editorHeight ? { height: editorHeight } : undefined}
-            autoFocus
-          />
-          <div className="editor-status">
-            {isSaving && <span className="autosave-indicator">Saving...</span>}
+          <div className="editor-container" style={{ position: 'relative' }}>
+            <AutoResizeTextarea
+              ref={textareaRef}
+              value={editedContent}
+              onChange={handleEditorChange}
+              onBlur={handleBlur}
+              onKeyDown={handleKeyDown}
+              className="content-editor"
+              autoResize={false}
+              style={editorHeight ? { height: editorHeight } : undefined}
+              autoFocus
+            />
+            {showAutocomplete && (
+              <NoteLinkAutocomplete
+                position={dropdownPos}
+                suggestions={suggestions}
+                selectedIndex={selectedIndex}
+                onSelect={insertLink}
+              />
+            )}
+            <div className="editor-status">
+              {isSaving && <span className="autosave-indicator">Saving...</span>}
+            </div>
           </div>
         </>
       ) : note.file_type === NoteType.Markdown ? (

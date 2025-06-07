@@ -292,6 +292,7 @@ export const OptimizedNoteViewer: React.FC<OptimizedNoteViewerProps> = ({
           textareaRef={textareaRef}
           onNoteLinkClick={handleNoteLinkClick}
           onExternalLinkClick={handleExternalLinkClick}
+          setEditedContent={setEditedContent}
         />
         
         {/* Backlinks Section - lazy loaded with a delay */}
