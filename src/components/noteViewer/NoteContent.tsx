@@ -201,7 +201,8 @@ export const NoteContent: React.FC<NoteContentProps> = ({
         e.preventDefault();
         const before = editedContent.substring(0, selectionStart);
         const after = editedContent.substring(selectionStart);
-        const newContent = `${before}[[]]${after}`;
+        // Insert the typed "[" followed by the closing brackets
+        const newContent = `${before}[]]${after}`;
         setEditedContent(newContent);
         const newPos = selectionStart + 1;
         setShowAutocomplete(true);
