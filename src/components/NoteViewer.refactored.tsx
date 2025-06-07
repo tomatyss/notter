@@ -247,6 +247,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
           onContentDoubleClick={handleContentDoubleClick}
           onNoteLinkClick={handleNoteLinkClick}
           onExternalLinkClick={handleExternalLinkClick}
+          setEditedContent={setEditedContent}
         />
         
         {/* Backlinks Section */}
