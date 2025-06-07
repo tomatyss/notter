@@ -191,6 +191,34 @@ export const NoteContent: React.FC<NoteContentProps> = ({
   
   // Custom key down handler to preserve scroll position
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === '[' && textareaRef?.current) {
+      const { selectionStart, selectionEnd } = textareaRef.current;
+      if (
+        selectionStart === selectionEnd &&
+        selectionStart > 0 &&
+        editedContent[selectionStart - 1] === '['
+      ) {
+        e.preventDefault();
+        const before = editedContent.substring(0, selectionStart);
+        const after = editedContent.substring(selectionStart);
+        const newContent = `${before}[[]]${after}`;
+        setEditedContent(newContent);
+        const newPos = selectionStart + 1;
+        setShowAutocomplete(true);
+        setAutocompleteStart(newPos);
+        setAutocompleteQuery('');
+        setSelectedIndex(0);
+        if (textareaRef.current) {
+          setDropdownPos(getCaretCoordinates(textareaRef.current, newPos));
+        }
+        setTimeout(() => {
+          textareaRef.current?.focus();
+          textareaRef.current?.setSelectionRange(newPos, newPos);
+        }, 0);
+        return;
+      }
+    }
+
     if (showAutocomplete) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
