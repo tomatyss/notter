@@ -103,6 +103,10 @@ The system follows the traditional Zettelkasten numbering pattern:
    1a1b-property-dualism.md
    ```
 
+When creating a subnote with the "Add Subnote" button, the new file uses your
+specified prefix directly (for example `1a1-new-topic.md`) and does not add an
+extra numeric prefix.
+
 ### Viewing Subnotes
 
 1. **Open a parent note**: Click on any note in the note list
