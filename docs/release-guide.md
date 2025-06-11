@@ -57,11 +57,11 @@ git tag vx.y.z
 git push origin vx.y.z
 ```
 
-For example, for version 0.1.5:
+For example, for version 0.1.6:
 
 ```bash
-git tag v0.1.5
-git push origin v0.1.5
+git tag v0.1.6
+git push origin v0.1.6
 ```
 
 ### 4. Monitor the Release Process
