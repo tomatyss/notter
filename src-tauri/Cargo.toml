@@ -1,6 +1,6 @@
 [package]
 name = "notter"
-version = "0.1.5"
+version = "0.1.6"
 description = "Notter"
 authors = ["Ivan Iufriakov"]
 edition = "2024"
