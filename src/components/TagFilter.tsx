@@ -46,6 +46,8 @@ export const TagFilter: React.FC<TagFilterProps> = ({
 }) => {
   // State to track if the tag filter is expanded or collapsed
   const [isExpanded, setIsExpanded] = useState(false);
+  // State for quick tag search
+  const [query, setQuery] = useState("");
   /**
    * Toggle a tag's selection state
    * 
@@ -77,6 +79,12 @@ export const TagFilter: React.FC<TagFilterProps> = ({
   if (allTags.length === 0) {
     return null;
   }
+
+  // Filter tags based on the search query
+  const visibleTags =
+    query.length >= 3
+      ? allTags.filter((t) => t.toLowerCase().startsWith(query.toLowerCase()))
+      : allTags;
 
   return (
     <div className="tag-filter">
@@ -118,6 +126,19 @@ export const TagFilter: React.FC<TagFilterProps> = ({
               </label>
             </div>
           )}
+
+          <div
+            className="tag-search"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <input
+              type="text"
+              className="tag-search-input"
+              placeholder="Search tags..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
           
           <div className="selected-tags">
             {selectedTags.length > 0 && (
@@ -138,15 +159,18 @@ export const TagFilter: React.FC<TagFilterProps> = ({
           
           <div className="all-tags-container">
             <div className="all-tags">
-              {allTags.map(tag => (
+              {visibleTags.map((tag) => (
                 <span
                   key={tag}
-                  className={`filter-tag ${selectedTags.includes(tag) ? 'selected' : ''}`}
+                  className={`filter-tag ${selectedTags.includes(tag) ? "selected" : ""}`}
                   onClick={() => toggleTag(tag)}
                 >
                   {tag}
                 </span>
               ))}
+              {visibleTags.length === 0 && (
+                <span className="no-tags">No matching tags</span>
+              )}
             </div>
           </div>
         </>
