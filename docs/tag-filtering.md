@@ -53,6 +53,13 @@ To filter your notes by tags:
 2. The note list will update to show only notes containing that tag
 3. The active filter will be displayed above the note list
 
+### Quick Tag Search
+
+When you have a large number of tags, scrolling through the full list can be
+tedious. Start typing in the **Search tags** field to narrow the list. Once you
+enter at least three letters, only tags beginning with those letters are
+displayed. Clear the search box to view all tags again.
+
 ### Multiple Tag Filtering
 
 You can filter by multiple tags using two different modes:

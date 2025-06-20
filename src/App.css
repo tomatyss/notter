@@ -616,6 +616,23 @@ body {
   gap: 5px;
 }
 
+.tag-search {
+  margin: 5px 0;
+}
+
+.tag-search-input {
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+.tag-search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
 .all-tags-container {
   max-height: 150px;
   overflow-y: auto;
@@ -692,9 +709,15 @@ body {
   .active-filters {
     color: #999;
   }
-  
+
   .all-tags-container {
     border-top: 1px solid #444;
+  }
+
+  .tag-search-input {
+    background-color: #2a2a2a;
+    color: #f0f0f0;
+    border-color: #444;
   }
 }
 
