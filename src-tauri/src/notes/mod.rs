@@ -31,7 +31,7 @@ pub enum SortOption {
 }
 
 /// Represents the type of a note file
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum NoteType {
     /// Markdown formatted note
     Markdown,
@@ -551,6 +551,19 @@ impl NoteManager {
         
         // Return the updated note
         self.read_note(&new_path)
+    }
+
+    /// Deletes a note file
+    ///
+    /// # Parameters
+    /// * `id` - ID of the note to delete
+    ///
+    /// # Returns
+    /// Result indicating success or failure
+    pub fn delete_note(&self, id: &str) -> Result<()> {
+        let path = self.get_note_path(id)?;
+        fs::remove_file(&path).context("Failed to delete note file")?;
+        Ok(())
     }
     
     /// Creates a new note file

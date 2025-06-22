@@ -35,3 +35,10 @@ env_logger = "0.10"  # Logging implementation
 thiserror = "1.0"  # Error handling
 natord = "1.0.9"  # Natural ordering for strings with numeric components
 regex = "1.9.5"  # Regular expressions for pattern matching
+eframe = "0.27"
+
+
+[[bin]]
+name = "egui_app"
+path = "src/egui_main.rs"
+

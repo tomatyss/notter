@@ -1,6 +1,6 @@
-mod config;
-mod notes;
-mod search;
+pub mod config;
+pub mod notes;
+pub mod search;
 
 use anyhow::Result;
 use log::info;

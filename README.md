@@ -4,7 +4,6 @@ Notter is a cross-platform desktop application for working with text files as a 
 
 > **Disclaimer**: This project is currently in active development. Features may change, and some functionality might be incomplete. Contributions and feedback are welcome!
 
-![Notter App](./public/screen.png)
 
 ## Features
 
@@ -62,6 +61,14 @@ Download the latest version for your platform from the [Releases](https://github
 2. **Browse Your Notes**: Once a directory is selected, Notter will scan for Markdown (`.md`) and text (`.txt`) files and display them in the note list.
 
 3. **View Notes**: Click on a note in the list to view its content in the main panel.
+
+### Interface
+
+The top bar lets you switch between three tabs:
+
+1. **Notes** – browse, edit, and create notes. Use the search box for full-text search and filter by tags in the sidebar.
+2. **Chat** – experiment with an LLM-powered assistant (currently just echoes your input).
+3. **Settings** – adjust the note naming pattern and search index options.
 
 ### Note Organization
 
@@ -142,11 +149,9 @@ Notter supports different ways to visualize your notes:
 
 ## Project Structure
 
-Notter is built with a modern tech stack:
-
-- **Frontend**: React with TypeScript for the user interface
-- **Backend**: Rust with Tauri for native functionality
-- **Storage**: Local file system for storing notes as regular text files
+The application is written entirely in Rust. The user interface is implemented
+with [egui](https://github.com/emilk/egui) so the whole program can run without
+any web stack. Notes are stored as regular text files on your file system.
 
 ### Key Components
 
@@ -158,9 +163,8 @@ Notter is built with a modern tech stack:
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v16 or later)
-- [Rust](https://www.rust-lang.org/tools/install) (latest stable)
-- [Tauri CLI](https://tauri.app/v1/guides/getting-started/prerequisites)
+You only need [Rust](https://www.rust-lang.org/tools/install) (latest stable)
+to build and run Notter.
 
 ### Setup
 
@@ -170,25 +174,23 @@ Notter is built with a modern tech stack:
    cd notter
    ```
 
-2. Install dependencies:
+2. Run the application from the `src-tauri` crate:
    ```bash
-   npm install
-   ```
-
-3. Run in development mode:
-   ```bash
-   npm run tauri dev
+   cargo run --manifest-path src-tauri/Cargo.toml --bin egui_app
    ```
 
 ### Building
 
-To build the application for production:
+To build a release version:
 
 ```bash
-npm run tauri build
+cargo build --manifest-path src-tauri/Cargo.toml --bin egui_app --release
 ```
 
-This will create platform-specific packages in the `src-tauri/target/release` directory.
+The binary will be located in `src-tauri/target/release`.
+
+By default the application loads notes from the `sample-notes` directory. Pass a
+path as the first argument to open your own collection.
 
 ### Releases
 
@@ -198,34 +200,18 @@ For detailed instructions on creating new releases, see the [Release Guide](docs
 
 ### iOS Development
 
-To build and run the application on iOS:
-
-1. Ensure you have a Mac with Xcode installed
-2. Make sure you have an Apple Developer account
-3. Update your development team ID in `src-tauri/tauri.conf.json`
-4. Use the provided build script:
+To build and run the application on iOS you can use the helper script:
 
 ```bash
 ./ios-build.sh
 ```
 
-Or run the commands manually:
-
-```bash
-# For development and testing in simulator
-npm run ios:dev
-
-# For production build
-npm run ios:build
-```
+The script requires Xcode and the `cargo tauri` command installed.
 
 ## Technologies
 
-- **[Tauri](https://tauri.app/)**: Framework for building desktop applications with web technologies
-- **[React](https://reactjs.org/)**: JavaScript library for building user interfaces
-- **[TypeScript](https://www.typescriptlang.org/)**: Typed superset of JavaScript
-- **[Rust](https://www.rust-lang.org/)**: Systems programming language for the backend
-- **[Vite](https://vitejs.dev/)**: Next-generation frontend tooling
+- **[Rust](https://www.rust-lang.org/)**: The language used for the entire codebase
+- **[egui](https://github.com/emilk/egui)**: Immediate mode GUI library powering the interface
 
 ## License
 

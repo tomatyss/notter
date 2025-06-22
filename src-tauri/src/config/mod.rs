@@ -5,7 +5,7 @@ use anyhow::{Context, Result};
 use crate::notes::NoteType;
 
 /// Mode for automatic search index updates
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum AutoUpdateMode {
     /// Update only changed notes
     Incremental,
