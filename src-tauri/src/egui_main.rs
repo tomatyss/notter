@@ -324,7 +324,12 @@ impl App for NotterEgui {
 }
 
 fn main() -> eframe::Result<()> {
-    let dir = std::env::args().nth(1).unwrap_or_else(|| "../sample-notes".into());
+    // Default to the repository's bundled sample notes if no path is provided.
+    // Running the binary from the project root expects "sample-notes" relative
+    // to the current working directory.
+    let dir = std::env::args()
+        .nth(1)
+        .unwrap_or_else(|| "sample-notes".into());
     let app = NotterEgui::new(PathBuf::from(dir));
     let opts = NativeOptions::default();
     eframe::run_native("Notter", opts, Box::new(|_cc| Box::new(app)))
