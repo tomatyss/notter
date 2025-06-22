@@ -166,9 +166,9 @@ to build and run Notter.
    cd notter
    ```
 
-2. Run the application:
+2. Run the application from the `src-tauri` crate:
    ```bash
-   cargo run --bin egui_app
+   cargo run --manifest-path src-tauri/Cargo.toml --bin egui_app
    ```
 
 ### Building
@@ -176,7 +176,7 @@ to build and run Notter.
 To build a release version:
 
 ```bash
-cargo build --bin egui_app --release
+cargo build --manifest-path src-tauri/Cargo.toml --bin egui_app --release
 ```
 
 The binary will be located in `src-tauri/target/release`.
