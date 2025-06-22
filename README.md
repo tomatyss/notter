@@ -62,6 +62,14 @@ Download the latest version for your platform from the [Releases](https://github
 
 3. **View Notes**: Click on a note in the list to view its content in the main panel.
 
+### Interface
+
+The top bar lets you switch between three tabs:
+
+1. **Notes** – browse, edit, and create notes. Use the search box for full-text search and filter by tags in the sidebar.
+2. **Chat** – experiment with an LLM-powered assistant (currently just echoes your input).
+3. **Settings** – adjust the note naming pattern and search index options.
+
 ### Note Organization
 
 Notter automatically extracts tags from your notes. Tags are words that start with `#` in your note content. For example:
