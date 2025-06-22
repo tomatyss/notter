@@ -31,7 +31,7 @@ pub enum SortOption {
 }
 
 /// Represents the type of a note file
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum NoteType {
     /// Markdown formatted note
     Markdown,
