@@ -37,7 +37,7 @@ impl App for NotterEgui {
                 ui.label("Search:");
                 ui.text_edit_singleline(&mut self.search);
                 ui.separator();
-                ui.text_edit_singleline(&mut self.new_title).hint_text("New note title");
+                ui.add(egui::TextEdit::singleline(&mut self.new_title).hint_text("New note title"));
                 if ui.button("Add").clicked() && !self.new_title.trim().is_empty() {
                     match self.manager.create_note(&self.new_title, "", NoteType::Markdown, None) {
                         Ok(_) => {
