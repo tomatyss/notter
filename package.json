@@ -16,7 +16,7 @@
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "^2.2.2",
     "@tauri-apps/plugin-opener": "^2",
-    "@types/lodash": "^4.17.18",
+    "@types/lodash": "^4.17.19",
     "date-fns": "^4.1.0",
     "lodash": "^4.17.21",
     "ollama": "^0.5.16",
