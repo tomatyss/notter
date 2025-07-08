@@ -22,6 +22,7 @@ To create a link to another note, use the double bracket syntax:
 ```
 
 Where "Note Title" is the exact title of the note you want to link to. The link will work in both Markdown (`.md`) and plain text (`.txt`) files.
+When you type `[[` in the editor, Notter automatically inserts the closing `]]` and shows a dropdown of existing note titles to speed up linking. Use the arrow keys or your mouse to select a suggestion, and the chosen title will be inserted between the brackets.
 
 ### Examples
 
@@ -89,9 +90,9 @@ For the most effective use of note linking:
 
 ## Future Enhancements
 
-Planned enhancements for the note linking feature include:
+- Future enhancements for the note linking feature include:
 
-- Autocomplete when typing `[[` to suggest existing note titles
+- ~~Autocomplete when typing `[[` to suggest existing note titles~~ *(implemented)*
 - Visual graph of note connections
 - Link preview on hover
 - Support for linking to specific sections within notes
